@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screenwriting Desk</title>
+<meta name="description" content="A personal screenwriting workspace built from Syd Field's books.">
+<meta name="theme-color" content="#B14A2A">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#EFECE4; --surface:#FFFFFF; --surface-2:#F7F4EC; --ink:#221F1A; --muted:#6E6A5E;
+  --accent:#B14A2A; --accent-ink:#FFFFFF; --accent-2:#3C6E58; --border:#DDD6C4;
+  --card-bg:#FFFDF7; --card-shadow:rgba(40,30,10,0.18);
+  --board-felt:#2F4A3B; --board-felt-2:#274031; --pin:#B14A2A; --danger:#A3402B;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17140F; --surface:#201C15; --surface-2:#241F17; --ink:#ECE6D8; --muted:#A79D89;
+    --accent:#E2794C; --accent-ink:#171310; --accent-2:#5FA98A; --border:#3A3325;
+    --card-bg:#2A2419; --card-shadow:rgba(0,0,0,0.55);
+    --board-felt:#1D2E24; --board-felt-2:#16241C; --pin:#E2794C; --danger:#E2794C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17140F; --surface:#201C15; --surface-2:#241F17; --ink:#ECE6D8; --muted:#A79D89;
+  --accent:#E2794C; --accent-ink:#171310; --accent-2:#5FA98A; --border:#3A3325;
+  --card-bg:#2A2419; --card-shadow:rgba(0,0,0,0.55);
+  --board-felt:#1D2E24; --board-felt-2:#16241C; --pin:#E2794C; --danger:#E2794C;
+}
+*{box-sizing:border-box;}
+body{background:var(--bg); color:var(--ink); font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size:14px; line-height:1.5;}
+h1,h2,h3,.display{font-family:"Fraunces", Georgia, serif; text-wrap:balance;}
+.mono{font-family:"IBM Plex Mono", ui-monospace, monospace;}
+button{font-family:inherit; cursor:pointer;}
+::-webkit-scrollbar{width:10px; height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border); border-radius:6px;}
+
+.app{display:flex; min-height:100vh;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{width:250px; flex:none; background:var(--surface-2); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:18px 14px; gap:18px;}
+.brand{display:flex; flex-direction:column; gap:2px; padding:0 4px;}
+.brand .mark{font-size:20px; font-weight:600; letter-spacing:-0.01em;}
+.brand .sub{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;}
+
+.section-label{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); padding:0 4px; margin-bottom:6px;}
+.projects{display:flex; flex-direction:column; gap:3px;}
+.project-row{display:flex; align-items:center; gap:6px;}
+.project-btn{flex:1; text-align:left; background:transparent; border:1px solid transparent; border-radius:8px; padding:8px 10px; color:var(--ink); font-size:13.5px; display:flex; flex-direction:column; gap:2px; min-width:0;}
+.project-btn .name{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;}
+.project-btn .meta{font-size:10.5px; color:var(--muted);}
+.project-btn:hover{background:var(--surface);}
+.project-row.active .project-btn{background:var(--surface); border-color:var(--border); box-shadow:0 1px 0 var(--card-shadow) inset;}
+.icon-btn{border:none; background:transparent; color:var(--muted); border-radius:6px; padding:5px; display:flex; align-items:center; justify-content:center;}
+.icon-btn:hover{background:var(--surface); color:var(--danger);}
+.icon-btn.armed{background:var(--danger); color:#fff; font-size:10.5px; font-weight:600; padding:5px 8px; white-space:nowrap;}
+.icon-btn.armed:hover{background:var(--danger); color:#fff;}
+.new-project{margin-top:2px; display:flex; align-items:center; gap:6px; padding:8px 10px; border-radius:8px; border:1px dashed var(--border); color:var(--muted); font-size:13px; background:transparent;}
+.new-project:hover{color:var(--accent); border-color:var(--accent);}
+.backup-row{display:flex; gap:6px; margin-top:6px;}
+.backup-btn{flex:1; border:none; background:transparent; color:var(--muted); font-size:11px; padding:5px 4px; border-radius:6px; text-decoration:underline; text-decoration-color:transparent;}
+.backup-btn:hover{color:var(--accent); text-decoration-color:var(--accent);}
+
+.nav{display:flex; flex-direction:column; gap:2px; margin-top:auto;}
+.nav-btn{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; border:none; background:transparent; color:var(--muted); font-size:13.5px; font-weight:500; text-align:left;}
+.nav-btn svg{width:16px; height:16px; flex:none;}
+.nav-btn.active{background:var(--accent); color:var(--accent-ink);}
+.nav-btn:not(.active):hover{background:var(--surface); color:var(--ink);}
+
+/* ---------- Main ---------- */
+.main{flex:1; min-width:0; display:flex; flex-direction:column; height:100vh; overflow:hidden;}
+.topbar{flex:none; padding:20px 32px 14px; border-bottom:1px solid var(--border); display:flex; align-items:baseline; justify-content:space-between; gap:16px;}
+.topbar h1{font-size:22px; font-weight:600; margin:0;}
+.topbar .desc{font-size:12.5px; color:var(--muted); margin-top:2px;}
+.content{flex:1; overflow-y:auto; padding:26px 32px 60px;}
+
+.empty-state{max-width:420px; margin:60px auto; text-align:center; color:var(--muted);}
+.empty-state .display{font-size:20px; color:var(--ink); margin-bottom:8px;}
+.empty-state button{margin-top:16px; background:var(--accent); color:var(--accent-ink); border:none; padding:10px 18px; border-radius:8px; font-size:13.5px; font-weight:500;}
+
+/* ---------- Roadmap ---------- */
+.progress-wrap{display:flex; align-items:center; gap:12px; margin-bottom:22px;}
+.progress-track{flex:1; height:8px; border-radius:5px; background:var(--border); overflow:hidden;}
+.progress-fill{height:100%; background:var(--accent-2); border-radius:5px; transition:width .25s ease;}
+.progress-label{font-size:12px; color:var(--muted); white-space:nowrap;}
+.progress-label .mono{color:var(--ink); font-weight:500;}
+
+.phase{border:1px solid var(--border); border-radius:12px; background:var(--surface); margin-bottom:14px; overflow:hidden;}
+.phase-head{display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; user-select:none;}
+.phase-num{font-family:"IBM Plex Mono"; font-size:11px; color:var(--surface); background:var(--accent-2); width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none;}
+.phase-title{font-weight:600; font-size:14.5px; flex:1;}
+.phase-count{font-size:11.5px; color:var(--muted); font-family:"IBM Plex Mono";}
+.chevron{width:14px; height:14px; color:var(--muted); transition:transform .15s ease; flex:none;}
+.phase.open .chevron{transform:rotate(90deg);}
+.phase-steps{display:none; padding:0 16px 14px 50px; flex-direction:column; gap:10px;}
+.phase.open .phase-steps{display:flex;}
+.step{display:flex; align-items:flex-start; gap:10px;}
+.step input[type=checkbox]{margin-top:3px; width:15px; height:15px; accent-color:var(--accent-2); flex:none;}
+.step label{font-size:13.5px; line-height:1.5; cursor:pointer;}
+.step.done label{color:var(--muted); text-decoration:line-through; text-decoration-color:var(--border);}
+.checkpoint-strip{margin-top:26px; padding:16px 18px; border-radius:12px; background:var(--surface-2); border:1px solid var(--border); font-size:12.5px; color:var(--muted);}
+.checkpoint-strip .display{color:var(--ink); font-size:13.5px; margin-bottom:6px;}
+.checkpoint-strip .chain{font-family:"IBM Plex Mono"; color:var(--ink); font-size:12px; line-height:1.9;}
+
+/* ---------- Cards / corkboard ---------- */
+.board-toolbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px;}
+.board-toolbar .hint{font-size:12px; color:var(--muted);}
+.columns{display:grid; grid-template-columns:repeat(4,minmax(210px,1fr)); gap:16px; align-items:start;}
+.column{background:var(--board-felt); background-image:radial-gradient(var(--board-felt-2) 1px, transparent 1px); background-size:14px 14px; border-radius:14px; padding:14px 12px 60px; min-height:420px; display:flex; flex-direction:column; gap:12px;}
+.column-head{display:flex; align-items:center; justify-content:space-between; padding:2px 4px 6px;}
+.column-title{color:#F3EFE3; font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.05em;}
+.column-count{color:#C9C2AA; font-family:"IBM Plex Mono"; font-size:11px;}
+.add-card-btn{width:100%; border:1.5px dashed rgba(243,239,227,0.35); color:#DCD6C2; background:transparent; border-radius:8px; padding:8px; font-size:12px;}
+.add-card-btn:hover{border-color:#F3EFE3; color:#F3EFE3;}
+
+.idx-card{background:var(--card-bg); border-radius:3px; padding:12px 12px 10px; box-shadow:0 3px 8px var(--card-shadow), 0 1px 0 rgba(255,255,255,0.4) inset; position:relative; cursor:grab; border:1px solid rgba(0,0,0,0.06);}
+.idx-card::before{content:""; position:absolute; top:-6px; left:50%; transform:translateX(-50%); width:11px; height:11px; border-radius:50%; background:var(--pin); box-shadow:0 2px 3px rgba(0,0,0,0.35);}
+.idx-card.dragging{opacity:.4;}
+.idx-card textarea{width:100%; border:none; background:transparent; resize:none; font-family:"IBM Plex Sans"; font-size:12.8px; color:#2b2620; line-height:1.45; padding:0; min-height:44px;}
+.idx-card textarea:focus{outline:none;}
+.card-foot{display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:6px; flex-wrap:wrap;}
+.tag-select{font-size:10.5px; font-family:"IBM Plex Mono"; border:none; background:rgba(0,0,0,0.06); color:#2b2620; border-radius:5px; padding:2px 5px;}
+.tag-select.tagged{background:var(--accent); color:#fff;}
+.card-del{border:none; background:transparent; color:#8b8474; padding:2px;}
+.card-del:hover{color:var(--danger);}
+
+/* ---------- Glossary ---------- */
+.glossary-controls{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center;}
+.search-box{flex:1; min-width:220px; position:relative;}
+.search-box input{width:100%; padding:10px 14px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--ink); font-size:13.5px;}
+.search-box input:focus{outline:2px solid var(--accent); outline-offset:-1px;}
+.chip-row{display:flex; gap:6px; flex-wrap:wrap;}
+.chip{border:1px solid var(--border); background:var(--surface); color:var(--muted); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:500;}
+.chip.active{background:var(--ink); color:var(--bg); border-color:var(--ink);}
+.gloss-count{font-size:12px; color:var(--muted); margin-bottom:12px;}
+.gloss-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px;}
+.gloss-entry{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:13px 14px;}
+.gloss-term{font-weight:600; font-size:14px; margin-bottom:4px;}
+.gloss-def{font-size:12.8px; color:var(--ink); opacity:.88; line-height:1.5;}
+.gloss-src{margin-top:8px; font-size:10.5px; font-family:"IBM Plex Mono"; color:var(--muted);}
+.book-pill{display:inline-block; padding:1px 6px; border-radius:4px; margin-right:6px; font-size:10px;}
+.book-pill.sp{background:#B14A2A22; color:var(--accent);}
+.book-pill.wb{background:#3C6E5822; color:var(--accent-2);}
+.book-pill.fs{background:#6E6A5E22; color:var(--muted);}
+
+.rename-input{background:var(--surface); border:1px solid var(--accent); border-radius:6px; padding:6px 8px; font-size:13px; color:var(--ink); width:100%;}
+
+/* ---------- Shared form fields ---------- */
+.field{display:flex; flex-direction:column; gap:4px;}
+.field .field-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:600;}
+.field input[type=text], .field textarea{background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:7px 9px; font-size:13px; color:var(--ink); font-family:inherit; resize:vertical;}
+.field input[type=text]:focus, .field textarea:focus{outline:2px solid var(--accent); outline-offset:-1px;}
+.field textarea{min-height:44px; line-height:1.45;}
+.add-row-btn{display:flex; align-items:center; gap:6px; padding:10px 14px; border-radius:9px; border:1.5px dashed var(--border); background:transparent; color:var(--muted); font-size:13px; font-weight:500;}
+.add-row-btn:hover{color:var(--accent); border-color:var(--accent);}
+
+/* ---------- Characters ---------- */
+.char-list{display:flex; flex-direction:column; gap:12px;}
+.char-card{border:1px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden;}
+.char-head{display:flex; align-items:center; gap:10px; padding:13px 16px; cursor:pointer; user-select:none;}
+.char-head input[type=text]{flex:1; border:none; background:transparent; font-family:"Fraunces"; font-size:15.5px; font-weight:600; color:var(--ink); padding:2px 0;}
+.char-head input[type=text]:focus{outline:none; border-bottom:1px solid var(--accent);}
+.char-head .need-preview{font-size:11.5px; color:var(--muted); max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.char-body{display:none; padding:2px 16px 18px;}
+.char-card.open .char-body{display:block;}
+.char-card.open .chevron{transform:rotate(90deg);}
+.field-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+.field-grid.full{grid-template-columns:1fr;}
+.subhead{font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent-2); font-weight:700; margin:16px 0 8px;}
+.subhead:first-child{margin-top:2px;}
+.arc-row{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+.arc-row .field-label{color:var(--accent);}
+
+/* ---------- Sequences ---------- */
+.seq-list{display:flex; flex-direction:column; gap:8px; margin-bottom:14px;}
+.seq-row{display:flex; align-items:flex-start; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px;}
+.seq-order{font-family:"IBM Plex Mono"; font-size:12px; color:var(--accent-2); background:var(--surface-2); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none; margin-top:2px;}
+.seq-fields{flex:1; display:flex; flex-direction:column; gap:6px; min-width:0;}
+.seq-fields input[type=text]{border:none; background:transparent; font-size:13.5px; color:var(--ink); padding:2px 0;}
+.seq-fields input.seq-name{font-weight:600; font-size:14px;}
+.seq-fields input:focus{outline:none;}
+.seq-count{font-size:10.5px; color:var(--muted); font-family:"IBM Plex Mono";}
+.seq-actions{display:flex; flex-direction:column; gap:2px;}
+.seq-actions button{border:none; background:transparent; color:var(--muted); padding:3px; border-radius:5px;}
+.seq-actions button:hover{background:var(--surface-2); color:var(--ink);}
+.seq-actions button:disabled{opacity:.3; cursor:default;}
+.seq-actions button:disabled:hover{background:transparent;}
+
+/* ---------- Scene details on cards ---------- */
+.scene-toggle{width:100%; text-align:left; border:none; background:transparent; color:#8b8474; font-size:10.5px; padding:4px 0 0; font-family:"IBM Plex Mono";}
+.scene-toggle:hover{color:#2b2620;}
+.scene-details{display:none; flex-direction:column; gap:6px; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.12);}
+.idx-card.expanded .scene-details{display:flex;}
+.scene-details select, .scene-details textarea{width:100%; font-size:11.5px; border:1px solid rgba(0,0,0,0.1); border-radius:5px; padding:4px 6px; background:rgba(255,255,255,0.6); color:#2b2620; font-family:"IBM Plex Sans"; resize:none;}
+.scene-details textarea{min-height:32px;}
+.scene-details label{font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:#8b8474; font-weight:600;}
+.seq-select{font-size:10.5px; font-family:"IBM Plex Mono"; border:none; background:rgba(0,0,0,0.06); color:#2b2620; border-radius:5px; padding:2px 5px; max-width:90px;}
+
+/* ---------- Structure Map ---------- */
+.map-controls{display:flex; align-items:center; gap:10px; margin-bottom:30px; font-size:12.5px; color:var(--muted);}
+.map-controls input{width:64px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:5px 8px; color:var(--ink); font-family:"IBM Plex Mono"; font-size:12.5px;}
+.map-ruler-wrap{position:relative; padding:0 10px; margin-bottom:8px;}
+.map-ruler{position:relative; height:6px; background:var(--border); border-radius:4px;}
+.map-fill{position:absolute; inset:0; background:linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius:4px;}
+.map-marker{position:absolute; top:-9px; width:24px; height:24px; margin-left:-12px; border-radius:50%; background:var(--surface); border:2px solid var(--border); display:flex; align-items:center; justify-content:center;}
+.map-marker.filled{border-color:var(--accent); background:var(--accent); box-shadow:0 2px 6px var(--card-shadow);}
+.map-marker .dot{width:6px; height:6px; border-radius:50%; background:var(--border);}
+.map-marker.filled .dot{background:#fff;}
+.map-labels{position:relative; height:290px; padding:0 10px; margin-top:26px;}
+.map-tick{position:absolute; top:0; width:140px; margin-left:-70px; text-align:center;}
+.map-tick.row1{top:150px;}
+.map-tick .name{font-size:11.5px; font-weight:600; color:var(--ink); margin-bottom:2px;}
+.map-tick .page{font-size:10px; font-family:"IBM Plex Mono"; color:var(--accent-2); margin-bottom:6px;}
+.map-tick .snippet{font-size:11px; color:var(--muted); line-height:1.4;}
+.map-tick .snippet.empty{font-style:italic; opacity:.6;}
+.map-legend{margin-top:20px; font-size:12px; color:var(--muted); background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px 16px;}
+.map-marker.filled{cursor:pointer;}
+.map-tick.linked .name{cursor:pointer; text-decoration:underline; text-decoration-color:var(--border); text-underline-offset:2px;}
+.map-tick.linked .name:hover{color:var(--accent);}
+
+/* ---------- Treatment ---------- */
+.treatment-note{font-size:11px; color:var(--accent-2); font-weight:600; margin-top:-2px;}
+.obstacle-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+
+/* ---------- Critic's Page ---------- */
+.critic-form{display:flex; gap:10px; margin-bottom:18px; align-items:flex-start;}
+.critic-form textarea{flex:1;}
+.critic-form button{flex:none; background:var(--accent); color:var(--accent-ink); border:none; border-radius:9px; padding:0 18px; font-size:13px; font-weight:500;}
+.critic-list{display:flex; flex-direction:column; gap:10px;}
+.critic-entry{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; display:flex; gap:12px; align-items:flex-start;}
+.critic-date{font-family:"IBM Plex Mono"; font-size:11px; color:var(--muted); flex:none; width:78px; padding-top:2px;}
+.critic-text{flex:1; font-size:13.5px; line-height:1.5; white-space:pre-wrap;}
+.critic-del{flex:none; border:none; background:transparent; color:var(--muted); padding:2px;}
+.critic-del:hover{color:var(--danger);}
+.critic-empty{color:var(--muted); font-size:13px; font-style:italic;}
+
+/* ---------- Coverage ---------- */
+.rating-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+.rating-row{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 12px;}
+.rating-row .rname{font-size:12.5px; font-weight:500;}
+.rating-row select{font-size:12px; border:1px solid var(--border); border-radius:6px; padding:4px 6px; background:var(--surface-2); color:var(--ink);}
+.rec-row{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+.rec-row select{font-size:13px; border:1px solid var(--border); border-radius:7px; padding:7px 10px; background:var(--surface); color:var(--ink); font-weight:600;}
+
+/* ---------- Submission ---------- */
+.protection-list{display:flex; flex-direction:column; gap:8px; margin-bottom:22px;}
+.protection-row{display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:10px 12px;}
+.protection-row input[type=checkbox]{width:16px; height:16px; accent-color:var(--accent-2);}
+.sub-row{display:flex; align-items:flex-start; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px;}
+.sub-fields{flex:1; display:grid; grid-template-columns:1.4fr 0.9fr 0.9fr 1.4fr; gap:8px; min-width:0;}
+.sub-fields input[type=text], .sub-fields select{font-size:12.5px; border:1px solid var(--border); border-radius:6px; padding:6px 8px; background:var(--surface-2); color:var(--ink);}
+
+/* ---------- Roadmap jump-links ---------- */
+.step-row{display:flex; align-items:flex-start; gap:10px; flex:1;}
+.jump-link{flex:none; font-size:10.5px; font-family:"IBM Plex Mono"; color:var(--accent); background:transparent; border:1px solid var(--accent); border-radius:6px; padding:2px 7px; white-space:nowrap; margin-top:1px;}
+.jump-link:hover{background:var(--accent); color:var(--accent-ink);}
+
+/* ---------- Sequences: linked cards ---------- */
+.seq-cards{display:flex; flex-direction:column; gap:4px; margin-top:6px; padding-top:6px; border-top:1px dashed var(--border);}
+.seq-card-item{font-size:11.5px; color:var(--muted); display:flex; gap:6px;}
+.seq-card-item .col-tag{flex:none; font-family:"IBM Plex Mono"; color:var(--accent-2);}
+.seq-toggle{background:transparent; border:none; color:var(--accent-2); font-size:10.5px; font-family:"IBM Plex Mono"; text-align:left; padding:0;}
+.seq-toggle:hover{color:var(--accent);}
+
+/* ---------- Glossary tab links ---------- */
+.gloss-link{display:inline-block; margin-top:8px; font-size:10.5px; font-family:"IBM Plex Mono"; color:var(--accent-2); background:transparent; border:1px solid var(--accent-2); border-radius:6px; padding:2px 7px;}
+.gloss-link:hover{background:var(--accent-2); color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="sidebar">
+    <div class="brand">
+      <span class="mark display">Screenwriting Desk</span>
+      <span class="sub">Syd Field, applied</span>
+    </div>
+
+    <div>
+      <div class="section-label">Projects</div>
+      <div class="projects" id="projectList"></div>
+      <button class="new-project" id="newProjectBtn">+ New project</button>
+      <div class="backup-row">
+        <button class="backup-btn" id="exportBtn">Export all</button>
+        <button class="backup-btn" id="importBtn">Import</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn" data-tab="roadmap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+        Roadmap
+      </button>
+      <button class="nav-btn" data-tab="treatment">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
+        Treatment
+      </button>
+      <button class="nav-btn" data-tab="characters">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
+        Characters
+      </button>
+      <button class="nav-btn" data-tab="sequences">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 8 4-8 4-8-4 8-4Z"/><path d="m4 11 8 4 8-4"/><path d="m4 15 8 4 8-4"/></svg>
+        Sequences
+      </button>
+      <button class="nav-btn" data-tab="cards">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="7" height="9" rx="1"/><rect x="14" y="9" width="7" height="9" rx="1"/><rect x="3" y="17" width="7" height="4" rx="1"/></svg>
+        Cards
+      </button>
+      <button class="nav-btn" data-tab="critic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Critic's Page
+      </button>
+      <button class="nav-btn" data-tab="structuremap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 8v3M11 8v5M15 8v3M19 8v5"/></svg>
+        Structure Map
+      </button>
+      <button class="nav-btn" data-tab="rewrite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        Rewrite Checklist
+      </button>
+      <button class="nav-btn" data-tab="coverage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9l-6.2 3.4 1.6-6.8L2.2 8.9l6.9-.6Z"/></svg>
+        Coverage
+      </button>
+      <button class="nav-btn" data-tab="submission">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>
+        Submission
+      </button>
+      <button class="nav-btn" data-tab="glossary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Glossary
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="tabTitle">Roadmap</h1>
+        <div class="desc" id="tabDesc">Follow it in sequence while actually writing a screenplay.</div>
+      </div>
+      <div class="desc mono" id="statusLine"></div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<script>window.__GLOSSARY__ = [{"term": "\"Engineering\" (adaptation as engineering)", "definition": "A screenwriter's own term for the craft of adaptation: taking narrative elements that work in the medium of the novel and re-designing them so they function correctly in the very different medium of a screenplay.", "book": "Four Screenplays", "chapter": "22 - The Writer's Journey", "chapterNum": "22"}, {"term": "\"If it ain't broke, don't fix it\" (adaptation restraint)", "definition": "An adaptation principle of not inventing new material for its own sake — but inventing connective scenes, transitions, or dialogue only where compressing the source material has genuinely broken its original logic and something new is needed to bridge the gap.", "book": "Four Screenplays", "chapter": "15 - Apples and Oranges", "chapterNum": "15"}, {"term": "\"If it ain't on the page, it ain't on the stage\"", "definition": "An old Hollywood maxim meaning that action, geography, and physical detail must be spelled out precisely in the script itself — a director and crew can only stage what the screenplay actually describes.", "book": "Four Screenplays", "chapter": "11 - Bad to the Bone", "chapterNum": "11"}, {"term": "\"The novel is source material; the film is behavior\"", "definition": "An adaptation-specific version of the \"film is behavior\" principle: interior backstory or explanation from a novel is only usable in a screenplay once it's converted into something visible and playable on screen, rather than left as narrated interior thought.", "book": "Four Screenplays", "chapter": "16 - Three Fathers", "chapterNum": "16"}, {"term": "Accelerating tempo technique", "definition": "A pacing device for building tension toward a climax: scenes get progressively shorter and cuts come faster as a sequence escalates, compressing time to intensify the audience's sense of urgency.", "book": "Four Screenplays", "chapter": "25 - Dances With Wolves - The Trail of a True Human Being", "chapterNum": "25"}, {"term": "Action is character", "definition": "The principle that what a character does, not what they say about themselves, is what actually defines them for the audience — used to explain how even a non-human character (like a robot) can be read as heroic through its actions alone.", "book": "Four Screenplays", "chapter": "08 - The Hero's Journey", "chapterNum": "8"}, {"term": "All drama is conflict", "definition": "A chain-reaction formula: without conflict there is no character, without character no action, without action no story, and without story no screenplay — meaning a protagonist must keep meeting obstacles for the drama to exist at all.", "book": "Four Screenplays", "chapter": "04 - On the Run", "chapterNum": "4"}, {"term": "Ambiguous-ending principle", "definition": "The idea that a film often benefits from not tying up every loose end at its conclusion — leaving some ambiguity lets the story live longer in the audience's imagination, since real life rarely resolves as neatly as an overly logical ending suggests.", "book": "Four Screenplays", "chapter": "20 - Graduation Day", "chapterNum": "20"}, {"term": "Art of discovery", "definition": "The idea that good screenwriting reveals a character's crucial backstory only obliquely and gradually, through hints and behavior, rather than stating it outright in dialogue or exposition.", "book": "Four Screenplays", "chapter": "01 - The Phenomenon of Thelma and Louise", "chapterNum": "1"}, {"term": "Be true to the facts, not the letter", "definition": "An adaptation principle for historical or factual material: it's acceptable to change specific details (like which real-world group or setting is depicted) for practical or production reasons, as long as the underlying truth or spirit of what's being portrayed is preserved.", "book": "Four Screenplays", "chapter": "22 - The Writer's Journey", "chapterNum": "22"}, {"term": "Bookend structure", "definition": "A structure in which the opening and closing images or scenes deliberately mirror each other, so the ending directly recalls and completes the beginning — a device that can also be discarded late if test audiences show it undercuts the story's tone.", "book": "Four Screenplays", "chapter": "14 - The Perfect Sacrifice", "chapterNum": "14"}, {"term": "Change the situation, not the character", "definition": "A technique for redeeming or repurposing a character who cannot plausibly change their fixed nature: instead of altering who they are internally, change what they are externally asked or directed to do, which produces new behavior without breaking consistency.", "book": "Four Screenplays", "chapter": "09 - Approaching the Sequel", "chapterNum": "9"}, {"term": "Character mirror (nonverbal parallel)", "definition": "Using a secondary character, creature, or element (an animal, an object) whose behavior visually echoes and comments on the protagonist's inner state, functioning as a silent parallel to their emotional condition without any dialogue stating the connection.", "book": "Four Screenplays", "chapter": "24 - First Encounters", "chapterNum": "24"}, {"term": "Chord of truth", "definition": "The idea that the real test of good screenwriting is whether a line or moment strikes a recognition that transcends culture, race, age, or geography — a universal truth the audience feels is true of people in general, not just a clever plot beat.", "book": "Four Screenplays", "chapter": "05 - The Con Man and the Thief", "chapterNum": "5"}, {"term": "Comic relief after tragedy", "definition": "A classical technique (traced back to the drunken porter scene after a murder in Macbeth) of following a serious or tragic beat immediately with a moment of humor, giving the audience emotional relief before the story returns to darker material.", "book": "Four Screenplays", "chapter": "07 - Journey's End", "chapterNum": "7"}, {"term": "Community of emotion", "definition": "The phenomenon of a movie theater audience — regardless of individual differences in gender, race, or background — reacting to a powerful scene as a single unified emotional entity, all feeling the same thing at the same moment.", "book": "Four Screenplays", "chapter": "12 - Escape from Pescadero", "chapterNum": "12"}, {"term": "Consistency of caricature", "definition": "The principle that a simplified, comic, or one-note character works dramatically not because of complexity but because they behave with total consistency to the shallow trait they were established with — inconsistency, not simplicity, is what breaks a caricature.", "book": "Four Screenplays", "chapter": "06 - No Turning Back", "chapterNum": "6"}, {"term": "Contradiction of image", "definition": "A technique of establishing one strong visual impression and then immediately subverting or reversing it with a second image, without dialogue — for example, dissolving from a sunny present-day street into the same street as a nuclear ruin, instantly redefining what the audience thought they were looking at.", "book": "Four Screenplays", "chapter": "11 - Bad to the Bone", "chapterNum": "11"}, {"term": "Cross-cutting subplot construction", "definition": "A method for building a subplot by first writing its whole line of action from beginning to end on its own, then cutting it into pieces and interweaving those pieces scene-by-scene with the main plot, rather than writing the two threads simultaneously as they occur to you.", "book": "Four Screenplays", "chapter": "04 - On the Run", "chapterNum": "4"}, {"term": "Decide whose story it is", "definition": "An early, decisive adaptation choice: commit to which character's point of view the film will follow, then cut everything — however good — that doesn't serve that character's presence and arc, even beloved subplots from the source material.", "book": "Four Screenplays", "chapter": "15 - Apples and Oranges", "chapterNum": "15"}, {"term": "Departure, Fulfillment, Return", "definition": "A three-word structural relabeling of the standard three-act shape for a hero's-journey story: Act I as leaving one's original world (Departure), Act II as finding belonging or purpose in a new one (Fulfillment), and Act III as being forced back into the world left behind (Return).", "book": "Four Screenplays", "chapter": "26 - The Wheel of Life", "chapterNum": "26"}, {"term": "Dramatic hook / inciting incident", "definition": "The specific event early in a story that springs the entire screenplay into motion — the moment that creates the situation everything afterward reacts to.", "book": "Four Screenplays", "chapter": "03 - Setting Up Character", "chapterNum": "3"}, {"term": "Dramatic need declared directly in dialogue", "definition": "A technique where a character's core want is stated outright in a single memorable line, functioning as the transactional engine that drives the rest of the story rather than being left implicit.", "book": "Four Screenplays", "chapter": "16 - Three Fathers", "chapterNum": "16"}, {"term": "Dream sequences rarely work on screen", "definition": "A blunt, practical rule that dream sequences, however illuminating they may be about a character's psychology in prose, tend to fall flat and feel like a narrative dead end when translated directly to film, and are often better cut.", "book": "Four Screenplays", "chapter": "22 - The Writer's Journey", "chapterNum": "22"}, {"term": "Earned naming/title payoff", "definition": "A technique where a character's name, title, or nickname (which may also be the film's title) is only assigned after another character has directly witnessed the behavior that justifies it — making the label feel earned through prior action rather than arbitrarily given.", "book": "Four Screenplays", "chapter": "25 - Dances With Wolves - The Trail of a True Human Being", "chapterNum": "25"}, {"term": "Effects grown from the story, not bolted on", "definition": "The practice of writing the physical logic and rules of a visual effect into the script as narrative description before the effect is technically possible to create, so the effects team solves a problem the story actually needs rather than effects being added on top of an unrelated plot.", "book": "Four Screenplays", "chapter": "12 - Escape from Pescadero", "chapterNum": "12"}, {"term": "Enter late, get out early", "definition": "A scene-construction rule: once characters and situation are already established, start a scene as close to its point as possible and leave as soon as the point is made — a single terse exchange can carry a reaction that would otherwise require a full explanatory scene.", "book": "Four Screenplays", "chapter": "04 - On the Run", "chapterNum": "4"}, {"term": "Film is behavior", "definition": "A principle borrowed from director Michelangelo Antonioni: character and relationship are best established through what people physically do, not through what they say about themselves. A screenplay can open with two contrasting, matched physical actions to establish two entire lives before any dialogue is spoken.", "book": "Four Screenplays", "chapter": "02 - On the Road to Liberation", "chapterNum": "2"}, {"term": "Finding the metaphorical opening image", "definition": "The practice of not simply filming a source novel's literal first pages, but searching the material for whichever image or moment best captures the story's real underlying subject, even if it comes from deep inside the book or wasn't originally intended as an opening.", "book": "Four Screenplays", "chapter": "16 - Three Fathers", "chapterNum": "16"}, {"term": "First principles interrogation method", "definition": "A method of understanding a character or mystery by stripping away surface behavior and asking foundational questions — what is this person's essential nature, and what does he actually do — until a single defining trait (their core desire) emerges as the answer.", "book": "Four Screenplays", "chapter": "19 - Teacher - First Principles", "chapterNum": "19"}, {"term": "Flashback discipline", "definition": "A rule for when a flashback is justified: it must reveal information — usually emotional rather than factual — that cannot be conveyed any other way, and it must move the story forward rather than repeating what dialogue or other means have already established.", "book": "Four Screenplays", "chapter": "17 - Partners in Crime", "chapterNum": "17"}, {"term": "Henry James's Theory of Illumination", "definition": "A technique in which a character is revealed not through their own actions or self-description but through what another character says about them, letting two characters define each other simultaneously in a single exchange.", "book": "Four Screenplays", "chapter": "03 - Setting Up Character", "chapterNum": "3"}, {"term": "Humanizing the antagonist before the turn", "definition": "Introducing a character who will later become or seem like a threat through sympathetic details (family life, warmth, ordinary vulnerability) before putting them in danger or revealing darker implications, so the audience's sympathy is secured first rather than the character being written as an obvious villain from the start.", "book": "Four Screenplays", "chapter": "13 - Things to Come", "chapterNum": "13"}, {"term": "Implying resolution rather than showing it", "definition": "Ending a story on a suspended or ambiguous image (like a freeze-frame just before an outcome) instead of depicting the outcome directly, letting the audience feel the resolution emotionally without watching its literal consequence.", "book": "Four Screenplays", "chapter": "07 - Journey's End", "chapterNum": "7"}, {"term": "Inner arc completion vs. external resolution", "definition": "The distinction between a character finishing their internal, emotional journey (achieving what they truly wanted or needed) and the story itself reaching its narrative conclusion — a character's inner arc can be complete well before the plot's external conflicts are actually resolved, since drama requires ongoing conflict to keep going.", "book": "Four Screenplays", "chapter": "25 - Dances With Wolves - The Trail of a True Human Being", "chapterNum": "25"}, {"term": "Insurance-scene test", "definition": "Before committing resources to shoot a planned supporting scene (like a flashback meant to reinforce a dialogue exchange), test whether the dialogue alone already fully carries the needed emotional information — if it does, the extra scene may be redundant and can be cut before it's ever shot.", "book": "Four Screenplays", "chapter": "19 - Teacher - First Principles", "chapterNum": "19"}, {"term": "Internal consistency of a fantastical power", "definition": "The practice of inventing explicit, self-imposed limits for a fantastical ability (what it can and cannot do) before writing scenes that use it, so the power stays dramatically fair and believable rather than becoming an anything-goes escape hatch for the plot.", "book": "Four Screenplays", "chapter": "10 - Liquid Metal", "chapterNum": "10"}, {"term": "Invisible transitions", "definition": "The rule that a good scene transition should never call attention to itself — if a viewer or reader notices a transition as a transition, it's probably not working. One reliable technique is having a later scene answer a question posed at the end of the previous one.", "book": "Four Screenplays", "chapter": "16 - Three Fathers", "chapterNum": "16"}, {"term": "Matched-cut characterization", "definition": "An opening technique in which two characters are introduced by intercutting a visually similar gesture each of them performs in their own separate setting, letting the contrast between their circumstances register instantly without dialogue.", "book": "Four Screenplays", "chapter": "02 - On the Road to Liberation", "chapterNum": "2"}, {"term": "Mid-Point", "definition": "The event roughly in the middle of Act II that connects the first half of the act to the second half, typically by removing or changing the protagonist's means or plan and forcing a shift from a passive, reactive mode into an active one.", "book": "Four Screenplays", "chapter": "05 - The Con Man and the Thief", "chapterNum": "5"}, {"term": "Modern tragedy", "definition": "A definition of tragedy suited to contemporary stories: not a great figure brought low by a personal flaw, but an ordinary person thrust into extraordinary circumstances, where the situation itself creates the potential for tragedy and permanently reshapes who they are.", "book": "Four Screenplays", "chapter": "09 - Approaching the Sequel", "chapterNum": "9"}, {"term": "Most-extreme-version premise technique", "definition": "A premise-generation exercise: take a story idea and push it to its most extreme or ironic version to find its strongest hook — for example, asking who the least likely person would be if the whole world's fate depended on that one person.", "book": "Four Screenplays", "chapter": "08 - The Hero's Journey", "chapterNum": "8"}, {"term": "Normalcy as horror", "definition": "A Hitchcock-derived technique of making the most ordinary-seeming scene the most frightening one, because the audience already knows a danger the surface dialogue and behavior don't reveal — dread comes from the gap between calm appearance and known threat.", "book": "Four Screenplays", "chapter": "12 - Escape from Pescadero", "chapterNum": "12"}, {"term": "Novel as tree, screenplay as line", "definition": "An analogy for the structural difference between the two forms: a novel is like a tree, with a central idea branching outward into many digressive explorations, while a screenplay must stay linear and always moving forward, unable to sustain the same digressive structure.", "book": "Four Screenplays", "chapter": "23 - The Strangeness of Life", "chapterNum": "23"}, {"term": "Novel vs. play vs. screenplay (medium comparison)", "definition": "A distinction between how each form tells a story: a novel lives inside a character's interior thoughts and memories; a play lives in dialogue delivered live to an audience; a screenplay has no direct access to interior monologue and must tell its story entirely through externals — visual action broken into shots and scenes.", "book": "Four Screenplays", "chapter": "11 - Bad to the Bone", "chapterNum": "11"}, {"term": "Open story vs. closed story", "definition": "Two ways to control audience knowledge: in a closed story, the audience learns what's happening at the same moment as the character; in an open story, the audience already knows something the character doesn't yet know, and tension comes from watching the character catch up to that knowledge.", "book": "Four Screenplays", "chapter": "20 - Graduation Day", "chapterNum": "20"}, {"term": "Opening up a dialogue scene", "definition": "Staging a scene that is essentially exposition or characterization delivered through dialogue in a more physically dynamic setting (like jogging outdoors instead of sitting in a room), giving the material visual life and room for a director to work with movement.", "book": "Four Screenplays", "chapter": "17 - Partners in Crime", "chapterNum": "17"}, {"term": "Passive-to-active turning point", "definition": "A clear moment where a protagonist who has been merely waiting or reacting explicitly decides to take initiative and pursue their goal directly — often marked by the character stating their own shift in a line of dialogue or voice-over.", "book": "Four Screenplays", "chapter": "24 - First Encounters", "chapterNum": "24"}, {"term": "Peaks and valleys", "definition": "A pacing principle for action-driven stories: alternate high-intensity action with quieter rest points so the audience can breathe, rather than running nonstop action from start to finish, which becomes numbing and boring no matter how well executed.", "book": "Four Screenplays", "chapter": "13 - Things to Come", "chapterNum": "13"}, {"term": "Physical and spiritual hero's journey", "definition": "A way of splitting a protagonist's arc into two simultaneous challenges: an external, physical trial (surviving danger, defending others) and an internal, spiritual one (a transformation of consciousness or belief) — both need to resolve for the journey to feel complete.", "book": "Four Screenplays", "chapter": "21 - Trail of Many Tears", "chapterNum": "21"}, {"term": "Pinch", "definition": "A sequence (which can be as short as one scene or as long as most of an act) placed partway through a story half whose only job is to keep that half of the screenplay on track — reorienting the action before it drifts. Pinch I typically falls partway through the first half of Act II, and Pinch II partway through the second half.", "book": "Four Screenplays", "chapter": "05 - The Con Man and the Thief", "chapterNum": "5"}, {"term": "Playing against the grain", "definition": "Deliberately withholding or delaying the expected choice, reaction, or plot development so the story doesn't move in the most obvious direction — for example, having a character decline something first before circling back and accepting it once motivation builds.", "book": "Four Screenplays", "chapter": "05 - The Con Man and the Thief", "chapterNum": "5"}, {"term": "Plot Point", "definition": "Any incident, episode, or event that hooks into the ongoing action of a story and spins it around into a new direction. A screenplay may contain several, but the ones ending Act I and Act II are the most important structural anchors, and a writer should know them (along with the beginning and ending) before starting to write.", "book": "Four Screenplays", "chapter": "03 - Setting Up Character", "chapterNum": "3"}, {"term": "Plot Point defined by function, not shock value", "definition": "A reminder that the most viscerally dramatic or shocking scene in a sequence is not automatically the structural Plot Point — the true Plot Point is whichever event actually advances the dramatic need driving the story forward, even if a more startling scene happens nearby.", "book": "Four Screenplays", "chapter": "18 - Quid Pro Quo", "chapterNum": "18"}, {"term": "Plot Point flexibility", "definition": "The observation that a Plot Point does not need to be a dramatic or loud event — it can be a completely silent, wordless moment — because what defines a Plot Point is its structural function of spinning the story into the next act, not its intensity or visibility.", "book": "Four Screenplays", "chapter": "06 - No Turning Back", "chapterNum": "6"}, {"term": "Promoting a minor detail into a major structural beat", "definition": "Taking a small, easily-passed-over detail from source material and elevating it into a significant plot element in the adaptation, because film pacing often needs a stronger hook or clue than prose requires.", "book": "Four Screenplays", "chapter": "18 - Quid Pro Quo", "chapterNum": "18"}, {"term": "Protective self-sacrifice ending", "definition": "An ending in which a protagonist chooses to give up something precious (a home, a connection, even their life) specifically to protect others from consequences that would fall on them otherwise — the sacrifice is framed as an act of protection rather than defeat.", "book": "Four Screenplays", "chapter": "26 - The Wheel of Life", "chapterNum": "26"}, {"term": "Scene-by-scene card breakdown (adaptation method)", "definition": "A method for adapting a novel by first breaking the entire book down scene by scene onto individual cards, giving the adapter a manipulable structural map they can reorder, cut, and compress before drafting the screenplay.", "book": "Four Screenplays", "chapter": "15 - Apples and Oranges", "chapterNum": "15"}, {"term": "Screenplay as organism", "definition": "The principle that a screenplay's elements are interdependent — changing one thing (a character choice, a scene order, a plot beat) requires re-examining and often changing other connected elements, since nothing in a working structure exists in isolation.", "book": "Four Screenplays", "chapter": "18 - Quid Pro Quo", "chapterNum": "18"}, {"term": "Separate agendas of novel and film", "definition": "The idea that a novel and its film adaptation are two distinct works, each pursuing its own goals in its own medium — a screenwriter's job is not to reproduce the book but to make an adaptation that succeeds cinematically on its own terms.", "book": "Four Screenplays", "chapter": "15 - Apples and Oranges", "chapterNum": "15"}, {"term": "Setup and payoff (early plant)", "definition": "Introducing a small visual or narrative detail early in a screenplay purely so that a later scene can use it without needing fresh explanation — the audience has already been quietly prepared to accept it.", "book": "Four Screenplays", "chapter": "02 - On the Road to Liberation", "chapterNum": "2"}, {"term": "Sharing experience (as an alternative to character-building)", "definition": "An approach to characterization in which a writer doesn't construct a character from biographical facts, but instead imaginatively lives through the character's experiences as though undergoing them personally — a legitimate alternative to more analytical character-biography methods.", "book": "Four Screenplays", "chapter": "22 - The Writer's Journey", "chapterNum": "22"}, {"term": "Shot, scene, and sequence", "definition": "The basic units of screenplay grammar: a shot is a single thing the camera sees; a scene is one or more shots unified by one place and one time (changing either starts a new scene); a sequence is a series of scenes connected by one governing idea (a chase, a wedding), with its own beginning, middle, and end, built like a miniature act.", "book": "Four Screenplays", "chapter": "17 - Partners in Crime", "chapterNum": "17"}, {"term": "Showing the result before the action", "definition": "A structural trick where the outcome of an event (e.g., a character fleeing with stolen money) is shown first, and only later is the event itself revealed — collapsing multiple characters' reactions into a compressed sequence without needing direct narration of what happened.", "book": "Four Screenplays", "chapter": "06 - No Turning Back", "chapterNum": "6"}, {"term": "Structure-as-sonata metaphor", "definition": "Describing a section of a screenplay's structure using a musical analogy — distinct sequential \"movements,\" each with its own content and mood, that build toward a larger cumulative effect the way movements build a musical piece.", "book": "Four Screenplays", "chapter": "24 - First Encounters", "chapterNum": "24"}, {"term": "Sub-dramatic context", "definition": "A short phrase naming the underlying emotional or functional task a section of a screenplay is performing (e.g., \"what to do\") — a way of keeping a stretch of scenes unified even though the surface events vary widely.", "book": "Four Screenplays", "chapter": "04 - On the Run", "chapterNum": "4"}, {"term": "Test-screening override", "definition": "The real-world practice of dropping a filmmaker's originally intended ending after audience test screenings show it doesn't work, replacing it with a version whose tone better matches the rest of the film — a documented case of data overriding original creative intent.", "book": "Four Screenplays", "chapter": "14 - The Perfect Sacrifice", "chapterNum": "14"}, {"term": "The kicker", "definition": "A technique where, just as the audience believes the story or threat is resolved, they are suddenly thrust into new territory that escalates the stakes even further than expected — a directorial or authorial signature move that resets the audience's sense of how far the story can still go.", "book": "Four Screenplays", "chapter": "14 - The Perfect Sacrifice", "chapterNum": "14"}, {"term": "The three possible endings", "definition": "A framework for closing out a story once the point of no return has been passed: the protagonist can escape (often unsatisfying if it doesn't feel earned), be captured or surrender (often bitter), or die — and the writer should test which of the three is the only one that feels emotionally correct given everything that came before.", "book": "Four Screenplays", "chapter": "07 - Journey's End", "chapterNum": "7"}, {"term": "Trust the audience, cut the explanation", "definition": "The principle that a lengthy scripted mechanism or explanation can sometimes be compressed into a single well-placed line of dialogue without losing the underlying idea, because audiences will fill in the rest themselves.", "book": "Four Screenplays", "chapter": "12 - Escape from Pescadero", "chapterNum": "12"}, {"term": "Two halves of one whole", "definition": "A way two distinct protagonists can function as a single composite main character — sharing one dramatic need, one arc, and one fate — so that their surface differences read as ordinary friction rather than real dramatic conflict between them.", "book": "Four Screenplays", "chapter": "03 - Setting Up Character", "chapterNum": "3"}, {"term": "Two ways to open a screenplay", "definition": "A simplification of opening strategy into two effective options: a dynamic action hook that grabs attention immediately, or a slower character-driven opening that takes its time establishing who someone is — genre usually dictates which is the right fit.", "book": "Four Screenplays", "chapter": "23 - The Strangeness of Life", "chapterNum": "23"}, {"term": "Voice-over usage rule", "definition": "A guideline for when narrated voice-over is justified: it works best when the main character is isolated and has few people to talk to, substituting for the dialogue-based exposition a more populated story could otherwise rely on.", "book": "Four Screenplays", "chapter": "23 - The Strangeness of Life", "chapterNum": "23"}, {"term": "Willing suspension of disbelief", "definition": "Coleridge's term for the reader's or viewer's choice to accept a story's premises as real for the duration of the experience — used as the necessary lens for taking genre and action films seriously as craft, since most fail to actually earn it.", "book": "Four Screenplays", "chapter": "08 - The Hero's Journey", "chapterNum": "8"}, {"term": "Write it now, cut it later", "definition": "Practical advice for an uncertain scene: when unsure whether a scene belongs, write it anyway, because it's much easier to cut a written scene later than to realize afterward you need a scene you never wrote and have to retrofit it in.", "book": "Four Screenplays", "chapter": "07 - Journey's End", "chapterNum": "7"}, {"term": "Write the sequel as if the first film never existed", "definition": "An approach to sequel-writing in which backstory and character history are dramatized from scratch within the new film, rather than assumed as known, so a viewer who never saw the original can still follow and feel the emotional stakes.", "book": "Four Screenplays", "chapter": "09 - Approaching the Sequel", "chapterNum": "9"}, {"term": "Writing \"in the pit\"", "definition": "Industry slang for writing a screenplay under an extreme, often externally imposed deadline (such as a release date announced before the script exists), forcing a compressed, high-pressure writing process.", "book": "Four Screenplays", "chapter": "10 - Liquid Metal", "chapterNum": "10"}, {"term": "Writing to the gap (subtext of the unsaid)", "definition": "Constructing a pivotal emotional scene around what characters deliberately do not say to each other — the real content of the scene lives in the gap between their actual words and their unspoken feelings or intentions.", "book": "Four Screenplays", "chapter": "05 - The Con Man and the Thief", "chapterNum": "5"}, {"term": "3x5 Card Method", "definition": "Field's technique for outlining a screenplay before writing it: jotting one scene or sequence idea (5-6 words) per index card, then arranging roughly 14 cards per act (about 56 total for a 120-page script) to test whether an act is too thin or overstuffed before drafting begins.", "book": "Screenplay", "chapter": "12 - Building the Story Line", "chapterNum": "12"}, {"term": "Aristotle's Three Unities", "definition": "The classical dramatic principle of unity of time, place, and action, cited as the historical root of a screenplay's fixed running length and single through-line of story.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Attitude (Character)", "definition": "A character's intellectual judgment or manner toward specific things (right/wrong, superior/inferior, optimistic/pessimistic), which governs their moment-to-moment behavior — more surface-level than point of view, though the line between the two is often fuzzy.", "book": "Screenplay", "chapter": "04 - Building a Character", "chapterNum": "4"}, {"term": "Beat Sheet", "definition": "A short outline (roughly 2-3 pages) breaking a story down into its major beats, used especially when adapting existing source material to decide what to keep, cut, or invent.", "book": "Screenplay", "chapter": "15 - Adaptation", "chapterNum": "15"}, {"term": "Centerpiece (Set-Piece)", "definition": "A major, memorable sequence a writer builds an entire story around, letting everything before and after it flow toward and away from that anchor scene.", "book": "Screenplay", "chapter": "04 - Building a Character", "chapterNum": "4"}, {"term": "Character Arc", "definition": "The path of emotional change and growth a character travels across a story, built from the foundation of their character biography — most characters end the story different from how they began it.", "book": "Screenplay", "chapter": "03 - The Creation of Character", "chapterNum": "3"}, {"term": "Character Biography", "definition": "A free-associative writing exercise tracing a character's life from birth to the start of the story (family, childhood, school, relationships, career) to build depth of knowledge for the writer, even though most of it never appears on the page.", "book": "Screenplay", "chapter": "03 - The Creation of Character", "chapterNum": "3"}, {"term": "Character vs. Characterization", "definition": "Character is a person's deep-seated nature — their values, beliefs, and actions. Characterization is the surface expression of that nature — clothes, car, taste, and how they appear to others.", "book": "Screenplay", "chapter": "03 - The Creation of Character", "chapterNum": "3"}, {"term": "Context and Content (Scene Building)", "definition": "A scene's context is its underlying purpose — why it exists and what it moves forward or reveals; its content is the specific choices made to realize that purpose — the place, time, characters, and events.", "book": "Screenplay", "chapter": "10 - The Scene", "chapterNum": "10"}, {"term": "Contradiction of Image", "definition": "A technique (associated with director Sam Peckinpah) of interweaving a main action with ironic, thematically loaded counterpoint imagery happening simultaneously, so the sequence carries thematic weight beyond its surface mechanics.", "book": "Screenplay", "chapter": "11 - The Sequence", "chapterNum": "11"}, {"term": "Coverage", "definition": "The written synopsis and evaluation that a studio or production company reader produces for every script submission, logged under the script's title and author — a rejected script resubmitted under the same title tends to be judged by its old coverage rather than read fresh.", "book": "Screenplay", "chapter": "17 - After It's Written", "chapterNum": "17"}, {"term": "Dramatic Need", "definition": "What the main character wants to win, get, gain, or achieve over the course of the story. Once a writer knows the need, they can invent the obstacles that block it, and the overcoming of those obstacles becomes the plot.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Dramatic Premise", "definition": "The underlying idea or question a screenplay dramatizes — what the story is about at its core, often statable as a single driving question (e.g., who is having an affair with whom).", "book": "Screenplay", "chapter": "00 - Introduction", "chapterNum": "Intro"}, {"term": "Dramatic Situation", "definition": "The specific circumstances and conditions surrounding the story's action — the setting and context the characters are placed within that generates the events of the plot.", "book": "Screenplay", "chapter": "00 - Introduction", "chapterNum": "Intro"}, {"term": "Dramatic Structure (formal definition)", "definition": "A linear arrangement of related incidents, episodes, or events that leads to a dramatic resolution.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Exposition", "definition": "The background information a script needs to deliver so the audience understands who the characters are and what's happening, allowing the story to proceed.", "book": "Screenplay", "chapter": "09 - Plot Points", "chapterNum": "9"}, {"term": "Exterior Life", "definition": "Everything about a character that happens on-page, from the story's fade-in to its fade-out — the process by which their interior life is revealed to the audience through action.", "book": "Screenplay", "chapter": "03 - The Creation of Character", "chapterNum": "3"}, {"term": "Externalizing Interior Monologue", "definition": "A common challenge in adaptation: converting a character's private, unspoken thoughts from a novel into visible action or spoken dialogue, since a screenplay cannot show interiority directly.", "book": "Screenplay", "chapter": "15 - Adaptation", "chapterNum": "15"}, {"term": "Flash Present", "definition": "An alternate term for a flashback scene, framing it not as a dip into 'the past' but as a scene that plays out in its own present tense.", "book": "Screenplay", "chapter": "10 - The Scene", "chapterNum": "10"}, {"term": "Form vs. Formula", "definition": "Form is a flexible shape allowing infinite variation within it (like a coat, which always has two arms but can look countless ways); formula is a rigid, identical output every time (like an assembly line). Screenplay structure is a form, not a formula — story determines structure, not the reverse.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Henry James's Theory of Illumination", "definition": "The idea that a main character sits at the center of a circle of other characters, and each interaction with them 'turns on a lamp' that illuminates a different facet of the main character, without the character having to state it directly.", "book": "Screenplay", "chapter": "04 - Building a Character", "chapterNum": "4"}, {"term": "Inciting Incident", "definition": "The opening scene or sequence of a screenplay that grabs the audience's attention and sets the story in motion by drawing the main character into the action.", "book": "Screenplay", "chapter": "06 - Endings and Beginnings", "chapterNum": "6"}, {"term": "Interior Life", "definition": "Everything about a character from birth up to the point the story begins — the private history and formative experiences that shape who they are, usually developed through a character biography exercise even though little of it appears directly on screen.", "book": "Screenplay", "chapter": "03 - The Creation of Character", "chapterNum": "3"}, {"term": "Internal vs. External Conflict", "definition": "Conflict, the hub of all drama, can originate inside a character as emotional or psychological opposition, or outside them as physical obstacles in the world — many strong screenplays use both simultaneously.", "book": "Screenplay", "chapter": "14 - Writing the Screenplay", "chapterNum": "14"}, {"term": "Key Incident", "definition": "The concrete dramatic scene that visualizes the story's dramatic premise on screen — the hub the whole story revolves around. It is often, but not always, the same beat as Plot Point I, and in some films it occurs before the story even starts.", "book": "Screenplay", "chapter": "08 - Two Incidents", "chapterNum": "8"}, {"term": "Live Research", "definition": "Gathering background knowledge for a screenplay through direct, firsthand contact — interviews and conversations with people who have lived or know the subject matter.", "book": "Screenplay", "chapter": "02 - The Subject", "chapterNum": "2"}, {"term": "Master Shot vs. Specific Shot", "definition": "A master shot covers a general area such as a room or street, while a specific shot isolates a single detail within it — writers choose between them based on what the story needs, without dictating actual camera direction.", "book": "Screenplay", "chapter": "13 - Screenplay Form", "chapterNum": "13"}, {"term": "Mid-Point", "definition": "A story-progression beat roughly at the middle of Act II (around page 60) — an incident, scene, or even a line of dialogue whose job is to move the story forward and anchor the act's midsection, splitting Act II into a first half and second half.", "book": "Screenplay", "chapter": "09 - Plot Points", "chapterNum": "9"}, {"term": "Mission Statement (Collaboration)", "definition": "A short, shared statement collaborators create together early in a co-writing project to define the tone and goal of the screenplay (e.g., 'an engaging, edge-of-the-seat page-turner'), paired with the agreed value of serving the material over personal ego.", "book": "Screenplay", "chapter": "16 - On Collaboration", "chapterNum": "16"}, {"term": "Objective Cut", "definition": "The second stage of drafting a screenplay: mechanically reducing an overwritten first draft (often 180-200 pages) down to a workable length (roughly 130-140 pages) through cutting, reordering, and patching, before the polish stage.", "book": "Screenplay", "chapter": "14 - Writing the Screenplay", "chapterNum": "14"}, {"term": "Option (Screenplay Rights)", "definition": "A common way screenplays are sold: a buyer pays for the exclusive right to develop or produce a script for a set period of time, rather than purchasing it outright.", "book": "Screenplay", "chapter": "17 - After It's Written", "chapterNum": "17"}, {"term": "Paradigm", "definition": "A conceptual model or shape for a screenplay's structure, akin to a diagram of a table as a top with four legs — the underlying pattern stays constant even though its specific expression (genre, tone, story) varies infinitely.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Parenthetical", "definition": "A brief stage direction placed under a character's name in the script, just before their dialogue, used sparingly to indicate tone or action — overuse is a common amateur mistake since actors tend to perform lines their own way regardless.", "book": "Screenplay", "chapter": "13 - Screenplay Form", "chapterNum": "13"}, {"term": "Physical Action vs. Emotional Action", "definition": "The two kinds of action a story's subject can dramatize: physical action is external and visible (chases, battles, competitions), while emotional action is internal and relational (feelings, relationships). Most films blend both.", "book": "Screenplay", "chapter": "02 - The Subject", "chapterNum": "2"}, {"term": "Playing Against the Grain", "definition": "A scene-writing technique of choosing the non-obvious emotional approach to a moment — for example, playing anger through soft, polite smiling rather than shouting — to create more interesting, less predictable drama.", "book": "Screenplay", "chapter": "10 - The Scene", "chapterNum": "10"}, {"term": "Plot Point", "definition": "Any incident, episode, or event that hooks into the story's action and spins it around in a new direction. A screenplay may contain many plot points, but two — Plot Point I and Plot Point II — anchor the ends of Act I and Act II.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Plot Point I", "definition": "The incident at the end of Act I (roughly page 20-30) that turns the story from Set-Up into Confrontation and is always tied to the main character's situation or choice.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Plot Point II", "definition": "The incident at the end of Act II (roughly page 85-90) that turns the story from Confrontation into Resolution, setting up the final act.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Point of View (Character)", "definition": "A character's acquired belief system about how the world works (e.g., 'life is unfair') — a fundamental lens through which they see everything, distinct from a simple opinion and not inherently right or wrong.", "book": "Screenplay", "chapter": "04 - Building a Character", "chapterNum": "4"}, {"term": "Poor Man's Copyright", "definition": "An informal, legally weak method of establishing a creation date for a script by mailing a sealed copy of it to oneself and never opening the envelope.", "book": "Screenplay", "chapter": "17 - After It's Written", "chapterNum": "17"}, {"term": "Resolution", "definition": "The true meaning of a story's ending — not the literal final scene, but the solution to the central dramatic question: whether the character gets what they need or not.", "book": "Screenplay", "chapter": "06 - Endings and Beginnings", "chapterNum": "6"}, {"term": "Right Against Right", "definition": "A structural principle for strong dramatic conflict: rather than good versus evil, the most powerful conflicts pit two characters who are each right from their own point of view, so neither is simply a villain.", "book": "Screenplay", "chapter": "08 - Two Incidents", "chapterNum": "8"}, {"term": "Scene", "definition": "The basic unit of dramatic action in a screenplay — the place where something specific happens. Every scene should either move the story forward or reveal character; if it does neither, it should be cut.", "book": "Screenplay", "chapter": "10 - The Scene", "chapterNum": "10"}, {"term": "Screenplay", "definition": "A story told through pictures, dialogue, and description, organized within the framework of dramatic structure. It is fundamentally a visual medium, distinct from a novel (interior thought) or a play (spoken language on a stage).", "book": "Screenplay", "chapter": "00 - Introduction", "chapterNum": "Intro"}, {"term": "Sequence", "definition": "A series of scenes connected by one single idea or context, with its own definite beginning, middle, and end — often expressible in one or two words, such as a wedding, a chase, or a heist. Considered the backbone that holds a screenplay together.", "book": "Screenplay", "chapter": "11 - The Sequence", "chapterNum": "11"}, {"term": "Serve the Material", "definition": "The governing principle for resolving creative disagreements in a collaboration: decisions should be made based on what's best for the script, not on which collaborator is 'right.'", "book": "Screenplay", "chapter": "16 - On Collaboration", "chapterNum": "16"}, {"term": "Set-Up, Confrontation, Resolution", "definition": "The three-part shape underlying all dramatic storytelling: establishing the characters and situation, dramatizing the obstacles they face, and then resolving the story. This is the seed of the three-act structure.", "book": "Screenplay", "chapter": "00 - Introduction", "chapterNum": "Intro"}, {"term": "Slug Line", "definition": "The capitalized scene heading (e.g., INT. KITCHEN - DAY) that fixes a scene's place and time. Changing either the place or the time creates a new scene, since it requires a new lighting and camera setup.", "book": "Screenplay", "chapter": "10 - The Scene", "chapterNum": "10"}, {"term": "Structure", "definition": "The relationship between the parts of a screenplay and the whole — how action, character, conflict, scenes, sequences, and dialogue fit together, the way pieces, players, and rules fit together in a game of chess.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Subject", "definition": "The combination of action (what the story is about) and character (who it is about). A usable subject can be reduced to a simple sentence: this person, in this place, doing this thing.", "book": "Screenplay", "chapter": "02 - The Subject", "chapterNum": "2"}, {"term": "Tag Scene", "definition": "A short scene or beat placed after a story's main dramatic question has already been resolved, used to tie off a final note or provide closure.", "book": "Screenplay", "chapter": "06 - Endings and Beginnings", "chapterNum": "6"}, {"term": "Text Research", "definition": "Gathering background knowledge for a screenplay through library and print sources, especially useful for period settings or unfamiliar subject matter.", "book": "Screenplay", "chapter": "02 - The Subject", "chapterNum": "2"}, {"term": "The Critic's Page", "definition": "A writer's-block technique: keeping a separate page where every self-critical thought is written down verbatim as it arises during drafting, then reviewing it later to see that the inner critic repeats the same handful of complaints regardless of the work's actual quality.", "book": "Screenplay", "chapter": "14 - Writing the Screenplay", "chapterNum": "14"}, {"term": "Three-Act Structure", "definition": "The standard model dividing a screenplay into Act I (Set-Up, roughly pages 1-20/30), Act II (Confrontation, roughly pages 20/30-85/90), and Act III (Resolution, from roughly page 85/90 to the end), each with a distinct dramatic function.", "book": "Screenplay", "chapter": "01 - What Is a Screenplay", "chapterNum": "1"}, {"term": "Treatment", "definition": "A narrative synopsis of a screenplay's story, typically 4-20 pages long, written in prose rather than script format — one alternative to card outlining, though not Field's preferred method.", "book": "Screenplay", "chapter": "12 - Building the Story Line", "chapterNum": "12"}, {"term": "Up Ending / Ambiguous Ending / Down Ending", "definition": "The three legitimate types of story resolution: an up ending resolves well for the characters, an ambiguous ending is left open to audience interpretation, and a down ending resolves badly. All three are valid as long as they're true to the story and characters.", "book": "Screenplay", "chapter": "05 - Story and Character", "chapterNum": "5"}, {"term": "\"A Day in the Life\" (Pages 11–20)", "definition": "The specific rule governing the second ten-page zone of Act I: the main character should appear in almost every scene of these pages, so the audience comes to know who they are through ordinary, representative action rather than through plot events being pushed forward.", "book": "Screenwriter's Workbook", "chapter": "11 - The Second and Third Ten Pages", "chapterNum": "11"}, {"term": "\"Dialogue Is Perishable, Dramatic Need Is Sacrosanct\" (Waldo Salt)", "definition": "A working principle from screenwriter Waldo Salt: once a character's dramatic need is established, the actual dialogue used to express it is flexible and replaceable (an actor can improvise around it), but the dramatic need itself must never change, because it's what holds the entire story together.", "book": "Screenwriter's Workbook", "chapter": "05 - What Makes Good Character", "chapterNum": "05"}, {"term": "\"Enter Late, Get Out Early\"", "definition": "William Goldman's rule for scene construction: every scene technically has its own beginning, middle, and end, but a screenwriter should almost never show all three. Instead, enter a scene at the last possible moment before its key reveal, and cut away the instant that reveal is delivered — trusting the audience to fill in everything left out.", "book": "Screenwriter's Workbook", "chapter": "10 - The First Ten Pages", "chapterNum": "10"}, {"term": "\"Film Is Behavior\"", "definition": "The principle that we come to know who a character is by watching what they do, not by what they say — a character's true nature is revealed through action and behavior rather than through dialogue or exposition.", "book": "Screenwriter's Workbook", "chapter": "06 - The Tools of Character", "chapterNum": "06"}, {"term": "\"Good Read\"", "definition": "A script that reads well from page one: crisp, sparse, visual prose; a strong inciting incident; appealing three-dimensional characters; a clear premise and situation established within the first ten pages; and, critically, a script not cluttered with excess characters or subplots.", "book": "Screenwriter's Workbook", "chapter": "17 - The Good Read", "chapterNum": "17"}, {"term": "\"Open It Up\"", "definition": "A visual-pacing technique urging writers to avoid stringing together scene after scene as simple interior-to-interior cuts, and instead show characters moving through physical space (leaving a building, hailing a cab, entering a lobby) — a reminder that a screenplay is a sequence of pictures, not a filmed stage play.", "book": "Screenwriter's Workbook", "chapter": "11 - The Second and Third Ten Pages", "chapterNum": "11"}, {"term": "\"The Type\"", "definition": "A concept borrowed from F. Scott Fitzgerald's observation that \"when you begin with an individual, you create a type\" — the idea that a truly specific, well-drawn individual character can become a broader cultural archetype other people recognize or even imitate. The craft implication is that specificity, not generality, is what makes a character resonate universally.", "book": "Screenwriter's Workbook", "chapter": "05 - What Makes Good Character", "chapterNum": "05"}, {"term": "3x5 Card Method (Act I)", "definition": "A technique for outlining Act I using index cards, one scene or idea per card in a few words only (never a full scene description, so the scene is discovered fresh when actually written). Field's rule of thumb: about fourteen cards tends to work well for Act I — thirteen is usually too thin, fifteen is usually too much — with Card 1 as the opening and the final card as Plot Point I.", "book": "Screenwriter's Workbook", "chapter": "09 - Structuring Act I", "chapterNum": "09"}, {"term": "Aristotle's Three Unities", "definition": "The classical dramatic principle of unity of time, place, and action, which Field cites as the root reason Act I functions as one self-contained unit of action rather than a loose collection of scenes.", "book": "Screenwriter's Workbook", "chapter": "03 - The Paradigm", "chapterNum": "03"}, {"term": "Attitude (Character Quality)", "definition": "A character's intellectual judgment or opinion about something — a sense of right/wrong or superior/inferior — distinguished from point of view but closely related to it; Field treats the boundary between the two as loose rather than a strict rule.", "book": "Screenwriter's Workbook", "chapter": "05 - What Makes Good Character", "chapterNum": "05"}, {"term": "Back Story", "definition": "What happens to your main character a day, a week, or even just an hour before your screenplay begins — a specific, emotionally-loaded incident (not a mundane errand) that the character carries, unspoken, into the opening scene. A strong back story lets the writer start the script on page one with real tension already loaded into the character, because the writer knows exactly what's underneath the character's behavior even though the audience doesn't yet. A back story that becomes compelling enough can migrate into becoming the actual dramatized opening, at which point a new back story is needed behind it.", "book": "Screenwriter's Workbook", "chapter": "09 - Structuring Act I", "chapterNum": "09"}, {"term": "Bookend Technique", "definition": "A structural device where a short scene or sequence set in the narrative present opens the film, the bulk of the story is then told (often via flashback), and the film returns to that same present-tense scene to close — used in films like Pulp Fiction, Sunset Boulevard, and The Bridges of Madison County.", "book": "Screenwriter's Workbook", "chapter": "02 - About Structure", "chapterNum": "02"}, {"term": "Character Autonomy", "definition": "The idea, drawn from playwright Harold Pinter, that well-realized characters can seem to \"elude\" or resist their writer's original plan for them — and that a writer should follow this resistance rather than force characters to remain obedient to a predetermined blueprint, since doing so tends to make them feel lifeless.", "book": "Screenwriter's Workbook", "chapter": "05 - What Makes Good Character", "chapterNum": "05"}, {"term": "Character Biography (Craft Tool)", "definition": "A private, deep-background document tracing a character's life in decades (first ten years, second ten, and so on up to the start of the story), typically five to seven or more pages, used to build a well of resource for the writer even though most of it never appears on the page. A useful variant is writing it in the first person (\"My name is...\") to more quickly find the character's voice.", "book": "Screenwriter's Workbook", "chapter": "06 - The Tools of Character", "chapterNum": "06"}, {"term": "Character Biography (Workshop Version)", "definition": "A Week 2 assignment in Field's seven-week workshop: write your protagonist's full life history from birth to the moment the story begins, organized into three tracks — professional life, personal life, and private life. Done for the main character and one or two other major characters before any scenes are drafted.", "book": "Screenwriter's Workbook", "chapter": "00 - Introduction", "chapterNum": "Intro"}, {"term": "Character Change/Transformation", "definition": "One of the four qualities of character: whether and how a character evolves over the course of the story. Change is not mandatory — a character's deliberate failure to change (as with the mother in Ordinary People) can be just as dramatically meaningful as an arc of growth.", "book": "Screenwriter's Workbook", "chapter": "05 - What Makes Good Character", "chapterNum": "05"}, {"term": "Character Drives Action / Action Drives Character", "definition": "A stated either/or dynamic describing how a story's engine works: in some screenplays the character's inner nature generates what happens (character drives action), while in others external events and situations shape and reveal who the character is (action drives character). Field suggests most stories are predominantly one or the other.", "book": "Screenwriter's Workbook", "chapter": "01 - The Blank Page", "chapterNum": "01"}, {"term": "Character vs. Characterization", "definition": "A distinction between two layers of a character: character is the deep-seated nature of who someone is — their values, actions, and beliefs, revealed through what they do — while characterization is surface detail, the outward expression of taste and presentation (the car they drive, what they eat, the pictures on their wall).", "book": "Screenwriter's Workbook", "chapter": "06 - The Tools of Character", "chapterNum": "06"}, {"term": "Circle of Being", "definition": "A technique for locating one formative incident — typically occurring between ages 9 and 18, a window theorized to imprint most durably on adult personality — that leaves a lasting mark on a character and becomes an ongoing source of internal conflict throughout the story. The method is to picture the character as a circle divided into wedges (physical, emotional, mental, spiritual, social, political, traumatic, intellectual) and search within that age range for the incident that explains their present-day point of view, attitude, or wound. It doesn't need to appear on the page — even left entirely implied or offscreen, it gives the writer a consistent well to draw from when deciding how the character would react in any scene.", "book": "Screenwriter's Workbook", "chapter": "07 - Conflict and the Circle of Being", "chapterNum": "07"}, {"term": "Conflict Through Omission", "definition": "A device where dramatic tension is expressed through what characters deliberately avoid discussing rather than what they say — the avoidance itself carries the conflict and can layer in subtext (such as racial tension carried underneath idle small talk in a tense waiting scene).", "book": "Screenwriter's Workbook", "chapter": "07 - Conflict and the Circle of Being", "chapterNum": "07"}, {"term": "Coverage", "definition": "The standard studio document used to professionally evaluate a script before an executive reads it, consisting of the title/author/genre, a compressed logline, a full synopsis, an analysis rating categories like Character, Dialogue, and Structure (each as Excellent/Good/Fair/Poor with justification), and a final reader's recommendation on whether to pass or pursue the material.", "book": "Screenwriter's Workbook", "chapter": "17 - The Good Read", "chapterNum": "17"}, {"term": "Creative Research", "definition": "The practice, when adapting real events or documents (diaries, historical records), of inventing new scenes and dialogue that never literally happened while still preserving the integrity and spirit of the true source material. Transcribing real material verbatim tends to produce a lifeless draft; creative research is what brings it to life.", "book": "Screenwriter's Workbook", "chapter": "01 - The Blank Page", "chapterNum": "01"}, {"term": "Dialogue's Full Function Checklist", "definition": "Field's complete list of jobs dialogue should do beyond simply moving the story forward or revealing character: communicate necessary facts and information, establish and make character relationships feel real, give characters depth and purpose, reveal the story's and characters' conflicts, reveal characters' emotional states, and comment on the action.", "book": "Screenwriter's Workbook", "chapter": "14 - Writing Act II", "chapterNum": "14"}, {"term": "Direction (Line of Development)", "definition": "The throughline a screenplay needs — a sense of movement, step by step, toward a known destination. Field compares it to planning a trip: you need to know where you're going before you set out, not wander without a resolution in mind.", "book": "Screenwriter's Workbook", "chapter": "02 - About Structure", "chapterNum": "02"}, {"term": "Drama of Confrontation", "definition": "A technique for generating dialogue that both moves the story forward and reveals character: write a verbal confrontation between two characters who want different, opposing things in the moment, letting the clash itself produce the scene's tension.", "book": "Screenwriter's Workbook", "chapter": "06 - The Tools of Character", "chapterNum": "06"}, {"term": "Dramatic Need", "definition": "What a character wants to win, gain, get, or achieve over the course of the story — the central engine that drives the plot. It can shift at Plot Point I as the character's goal changes in response to the story's turn.", "book": "Screenwriter's Workbook", "chapter": "05 - What Makes Good Character", "chapterNum": "05"}, {"term": "Dramatic Premise vs. Dramatic Situation", "definition": "Two things Act I must establish: the dramatic premise (what the story is fundamentally about) and the dramatic situation (the specific circumstances surrounding the action), alongside the character's professional, personal, and private life — all needed before the story can move into Act II.", "book": "Screenwriter's Workbook", "chapter": "03 - The Paradigm", "chapterNum": "03"}, {"term": "Dramatic Reality", "definition": "A three-step model for turning true events or personal experience into workable screen material: Reality (what actually happened), Unreality (invented incidents that never happened but serve the drama), and Dramatic Reality (the fusion of the two into something that actually plays on screen). Field's advice is not to feel bound to literal reality, since sticking too closely to what really happened usually makes for a thin story.", "book": "Screenwriter's Workbook", "chapter": "01 - The Blank Page", "chapterNum": "01"}, {"term": "Dramatic Recreation", "definition": "One of the two writing modes used inside the four-page treatment: a short, visually specific, scene-level description (like a mini-script excerpt) reserved for only the four anchor beats — the opening, Plot Point I, Plot Point II, and the ending.", "book": "Screenwriter's Workbook", "chapter": "04 - Four Pages", "chapterNum": "04"}, {"term": "Dramatic Structure (Formal Definition)", "definition": "Field's formal definition, borrowed loosely from dictionary usage: \"a linear arrangement of related incidents, episodes, and events leading to a dramatic resolution.\" Structure is not a rigid formula but a context — a space, like a suitcase, that holds whatever content a writer puts into it.", "book": "Screenwriter's Workbook", "chapter": "02 - About Structure", "chapterNum": "02"}, {"term": "Ending Philosophy (Hope over Nihilism)", "definition": "Field's own stated point of view, not presented as a hard rule: screenwriters carry a certain responsibility to their audience, and should default toward resolutions built on hope, unity, and self-worth rather than nihilism whenever the story can honestly support it — while still allowing for bleak, earned endings when darkness is integral to the story rather than a reflexive default.", "book": "Screenwriter's Workbook", "chapter": "15 - Act III - The Resolution", "chapterNum": "15"}, {"term": "Explanation Scenes (to Avoid)", "definition": "Scenes where a character narrates their own intentions in dialogue instead of the writer simply showing the action and cutting to its result. Field's example: cut a line like \"I need a jade ring\" followed by shopping and showing it off, down to just entering the store and cutting straight to showing the ring off at the party.", "book": "Screenwriter's Workbook", "chapter": "16 - The Rewrite", "chapterNum": "16"}, {"term": "First Half of Act II / Second Half of Act II", "definition": "The two roughly 30-page halves that Act II's Confrontation section is split into by the Mid-Point — the First Half running from Plot Point I to the Mid-Point, and the Second Half running from the Mid-Point to Plot Point II. Splitting Act II this way lets each half be outlined and paced as its own manageable unit, rather than treating the full 60 pages as one undifferentiated block.", "book": "Screenwriter's Workbook", "chapter": "12 - Finding the Mid-Point", "chapterNum": "12"}, {"term": "Flashback Test", "definition": "A practical rule for deciding whether to use a flashback at all: it must do one of the two things any scene must do — move the story forward or reveal character. A flashback included only because the writer doesn't know another way to convey backstory will call attention to itself and fail.", "book": "Screenwriter's Workbook", "chapter": "08 - Of Time and Memory", "chapterNum": "08"}, {"term": "Flashpresent", "definition": "A term from screenwriter Waldo Salt: a flashback isn't really about depicting the past — it's a window into what the character is thinking or feeling right now, in the present moment of the scene. Since the audience experiences it through the character's current consciousness, a flashback functions as an expression of character rather than a mechanical plot device for conveying backstory.", "book": "Screenwriter's Workbook", "chapter": "08 - Of Time and Memory", "chapterNum": "08"}, {"term": "Four-Page Treatment (\"Kick in the Ass\" Exercise)", "definition": "Field's signature exercise for forcing shape onto a raw, unformed idea: write a narrative treatment of exactly four pages, following a fixed page budget — a half page each of vivid scene-level \"dramatic recreation\" for the opening, Plot Point I, Plot Point II, and the ending, with brief narrative summary filling in the rest of each act. The tight page limit is what makes the exercise valuable, forcing early clarity rather than allowing a vague idea to sprawl.", "book": "Screenwriter's Workbook", "chapter": "04 - Four Pages", "chapterNum": "04"}, {"term": "Internal Conflict vs. External Conflict", "definition": "The two sources of dramatic conflict: internal conflict comes from forces inside a character (fear, doubt, guilt, hesitation), while external conflict comes from forces outside them (war, weather, terrain, pursuit, an antagonist). Most screenplays blend both, and one often causes the other to surface.", "book": "Screenwriter's Workbook", "chapter": "07 - Conflict and the Circle of Being", "chapterNum": "07"}, {"term": "Internal vs. External Obstacles", "definition": "The two categories of obstacle standing between a character and their dramatic need: internal obstacles are emotional forces inside the character (fear, self-doubt), external obstacles are outside forces (an antagonist, physical danger, circumstance). Most real characters face a combination of both.", "book": "Screenwriter's Workbook", "chapter": "03 - The Paradigm", "chapterNum": "03"}, {"term": "Key Incident", "definition": "A single, specific incident that anchors an entire story and everything radiates from it — even in fractured, nonlinear films like Pulp Fiction (Jules and Vincent retrieving Marsellus Wallace's briefcase), every storyline still connects back to one key incident that holds the piece together.", "book": "Screenwriter's Workbook", "chapter": "02 - About Structure", "chapterNum": "02"}, {"term": "Logline", "definition": "A four-to-five line summary of a script's plot, used both in professional coverage documents and as a compression exercise for writers — Field recommends studying TV Guide-style loglines as models of maximum compression.", "book": "Screenwriter's Workbook", "chapter": "17 - The Good Read", "chapterNum": "17"}, {"term": "Maximum Dramatic Value (MDV)", "definition": "The organizing goal of structure: arranging a screenplay's events and scenes so they deliver the greatest possible emotional and dramatic impact, rather than simply presenting incidents in the order they might have occurred.", "book": "Screenwriter's Workbook", "chapter": "02 - About Structure", "chapterNum": "02"}, {"term": "Mid-Point", "definition": "An incident, episode, or event occurring around page 60 of the script that functions as a link in the chain of dramatic action, connecting the First Half of Act II (from Plot Point I to the Mid-Point) to the Second Half of Act II (from the Mid-Point to Plot Point II). It behaves like any other Plot Point in that it hooks into the action and spins it in a new direction, but its defining job is structural: it breaks the unwieldy 60-page Act II into two workable 30-page units that can be outlined with the same card-based methods used for Act I. It can only be located after the ending, beginning, Plot Point I, and Plot Point II are already known.", "book": "Screenwriter's Workbook", "chapter": "12 - Finding the Mid-Point", "chapterNum": "12"}, {"term": "Narrative Synopsis", "definition": "The second writing mode used inside the four-page treatment: general, summarized prose used to cover the bulk of the action within Act I, Act II, and Act III, as opposed to the vivid scene-by-scene detail reserved for the four anchor beats.", "book": "Screenwriter's Workbook", "chapter": "04 - Four Pages", "chapterNum": "04"}, {"term": "Newton's Third Law (of Character)", "definition": "A recurring reminder that a character must be active — causing scenes to happen through their own choices and actions, rather than merely absorbing or reacting to events that happen around them.", "book": "Screenwriter's Workbook", "chapter": "11 - The Second and Third Ten Pages", "chapterNum": "11"}, {"term": "Open System vs. Closed System", "definition": "A framing for how a screenplay should be written: a closed system (like a rock) has no exchange with its environment, while an open system (like a city) is in constant exchange with its surroundings. Writing a screenplay is an open system — if a character organically wants to do something other than what was planned for a scene, the writer should listen to that impulse rather than force the pre-planned version.", "book": "Screenwriter's Workbook", "chapter": "02 - About Structure", "chapterNum": "02"}, {"term": "Opposite Point-of-View Technique", "definition": "A technique for breaking through a stuck scene: write the scene first entirely from the other character's point of view and reasoning (for example, why a casting director genuinely believes the protagonist is wrong for the part) before flipping back to write the protagonist's side — manufacturing real conflict on the page instead of fighting the blank page alone.", "book": "Screenwriter's Workbook", "chapter": "14 - Writing Act II", "chapterNum": "14"}, {"term": "Paradigm", "definition": "Field's term for the underlying structural model of a screenplay — literally \"a model, an example, or a conceptual scheme\" — often illustrated as a table with four legs: the beginning, Plot Point I, Plot Point II, and the ending, all needed to hold up the story.", "book": "Screenwriter's Workbook", "chapter": "03 - The Paradigm", "chapterNum": "03"}, {"term": "Parking a New Idea", "definition": "A discipline for handling a powerful new idea that strikes while finishing Act III: instead of chasing it, jot it down separately in two or three pages, set it aside, and return to finishing the current script — protecting momentum on the draft actually being resolved.", "book": "Screenwriter's Workbook", "chapter": "15 - Act III - The Resolution", "chapterNum": "15"}, {"term": "Pinch I / Pinch II", "definition": "Two anchoring beats, one roughly at the midpoint of each 30-page half of Act II (Pinch I around page 45, Pinch II around page 75), whose sole job is to \"pinch\" the story line back on track — keeping it moving toward the Mid-Point (Pinch I) or toward Plot Point II (Pinch II). A Pinch can be any kind of scene — action, dialogue, or a quiet character beat — its defining feature is its function of preventing a 15-page stretch from drifting, not any particular form. Symmetry between the two Pinches (a causal link from one to the other) is common but not required.", "book": "Screenwriter's Workbook", "chapter": "13 - First Half, Second Half", "chapterNum": "13"}, {"term": "Plot (Field's Definition)", "definition": "Field's plain definition of plot: simply \"what happens\" in the story. He advises that at the idea stage, before you've settled on your subject (action plus character), plot should be the furthest thing from your mind — it gets worked out later, once the subject is clear.", "book": "Screenwriter's Workbook", "chapter": "01 - The Blank Page", "chapterNum": "01"}, {"term": "Plot Point", "definition": "Any incident, episode, or event that hooks into the action of a story and spins it around into a new direction. A Plot Point can take almost any form — a physical action, a silent gesture, an action sequence, or a single line of dialogue.", "book": "Screenwriter's Workbook", "chapter": "03 - The Paradigm", "chapterNum": "03"}, {"term": "Point of View (Character Quality)", "definition": "A character's belief system or way of seeing the world, acquired through their life experience — not inherently right or wrong, just the lens ('the World is as you see it') through which they interpret everything that happens to them.", "book": "Screenwriter's Workbook", "chapter": "05 - What Makes Good Character", "chapterNum": "05"}, {"term": "Resolution (Act III)", "definition": "The organizing principle of Act III (roughly the final 30 pages, from Plot Point II to the end): Resolution means solution, not simply \"the ending\" as one specific scene. Act III is usually anchored by only one to three dramatic elements or unresolved threads that need to be settled, and is often the easiest act to write since the story's internal logic has stabilized by this point.", "book": "Screenwriter's Workbook", "chapter": "15 - Act III - The Resolution", "chapterNum": "15"}, {"term": "Revision-Percentage Map", "definition": "A calibration table Field offers for how heavily each section of a script typically needs to be rewritten during the mechanical draft: Act I about 80–85%, the First Half of Act II about 50–60%, the Second Half of Act II about 25–30%, and Act III only about 10–15% — because Act I and the early part of Act II are usually where the story drifted most from its original plan, while the throughline has stabilized by Act III.", "book": "Screenwriter's Workbook", "chapter": "16 - The Rewrite", "chapterNum": "16"}, {"term": "Scene Purpose Rule", "definition": "Every scene in a screenplay must do one of two things: move the story forward, or reveal information about character. Anything that does neither should be cut — especially in Act I.", "book": "Screenwriter's Workbook", "chapter": "03 - The Paradigm", "chapterNum": "03"}, {"term": "Screenplay vs. Novel vs. Play", "definition": "Field's distinction between the three narrative forms by where the drama actually lives: a novel plays out inside the protagonist's head (internal point of view, thoughts, memory), a play is spoken action witnessed by an audience across a \"fourth wall,\" and a screenplay tells its story through pictures, dialogue, and description organized within dramatic structure — film is fundamentally a visual medium.", "book": "Screenwriter's Workbook", "chapter": "02 - About Structure", "chapterNum": "02"}, {"term": "Sequence (Formal Definition)", "definition": "A series of scenes connected by one single idea, possessing its own definite beginning, middle, and end — Field's working definition, arrived at while studying forty produced scripts as head of a story department.", "book": "Screenwriter's Workbook", "chapter": "10 - The First Ten Pages", "chapterNum": "10"}, {"term": "Seven-Week Workshop Cycle", "definition": "The rhythm Field's actual screenwriting workshops (and this book) follow: weeks 1–4 are preparation (subject, character, 3x5 cards for Act I, back story), weeks 5–7 are writing at roughly ten pages a week until Act I is finished (about 20–30 pages), and the whole cycle then repeats for Act II and for Act III plus the rewrite.", "book": "Screenwriter's Workbook", "chapter": "00 - Introduction", "chapterNum": "Intro"}, {"term": "Sub-Dramatic Context", "definition": "A one-phrase description of what one 30-page half of Act II is actually about, distinct from Act II's overall context of Confrontation — for example, a First Half sub-context of \"revealing their unhappy marriages\" giving way to a Second Half sub-context of \"an unsustainable arrangement.\" Defining a sub-dramatic context for each half of Act II gives the writer two smaller, differently-themed blocks to build instead of one long, undifferentiated act.", "book": "Screenwriter's Workbook", "chapter": "13 - First Half, Second Half", "chapterNum": "13"}, {"term": "Subtext", "definition": "What is not said in a scene — the real meaning or tension running underneath the literal dialogue. Characters often talk around the thing that actually matters, and the audience senses the unspoken truth beneath the polite surface conversation.", "book": "Screenwriter's Workbook", "chapter": "06 - The Tools of Character", "chapterNum": "06"}, {"term": "Telescoping", "definition": "A polish-draft technique for tightening a script: merging a scene from one half of Act II with a related scene from the other half into a single, more efficient combined scene.", "book": "Screenwriter's Workbook", "chapter": "16 - The Rewrite", "chapterNum": "16"}, {"term": "Ten-Page Zones of Act I", "definition": "Field's breakdown of Act I into three distinct 10-page functional units, each with its own job: pages 1–10 (Set-Up) establish the main character, premise, and situation; pages 11–20 (\"a day in the life\") keep the main character in almost every scene so the audience learns who they are through representative action, rather than plot mechanics; pages 21–30 use only one or two transitional scenes to bridge from that \"day in the life\" material into Plot Point I. This granular three-zone breakdown of Act I does not appear in Field's earlier book Screenplay.", "book": "Screenwriter's Workbook", "chapter": "11 - The Second and Third Ten Pages", "chapterNum": "11"}, {"term": "The Bumblebee Parable", "definition": "A metaphor, drawn from a bumblebee trapped in Field's bathroom repeatedly slamming into a closed windowpane inches from an open one, for a writer grinding against a scene or structural approach that fundamentally doesn't work while refusing to stop and look for another way out. The lesson: when something isn't working, stop and reassess whether the whole approach — not just the execution — may be wrong, rather than continuing to force it.", "book": "Screenwriter's Workbook", "chapter": "14 - Writing Act II", "chapterNum": "14"}, {"term": "The Critic's Page", "definition": "An anti-writer's-block exercise: keep a separate sheet titled \"Critic's Page\" next to your script pages, and whenever a self-critical thought interrupts your writing, write it down there instead of fighting it, then keep writing the script. After a few days, reading the Critic's Pages back typically reveals the same handful of negative thoughts on repeat — recognizing the inner critic as a fixed, repetitive loop (not real feedback) defuses its power to stop you writing.", "book": "Screenwriter's Workbook", "chapter": "14 - Writing Act II", "chapterNum": "14"}, {"term": "The Reveal", "definition": "The one specific piece of information a given scene exists to deliver — whether through action or through character. Field's guidance is that a writer should always be able to name a scene's reveal; if they can't, the scene likely doesn't have a clear purpose yet.", "book": "Screenwriter's Workbook", "chapter": "10 - The First Ten Pages", "chapterNum": "10"}, {"term": "Theme vs. Plot", "definition": "A distinction illustrated through screenwriter Tony Gilroy's account of writing The Bourne Supremacy: a script that feels directionless often needs a theme (an underlying idea, like atonement), not more plot events. Once the theme is found, it typically generates the key incident needed to structure the rest of the story.", "book": "Screenwriter's Workbook", "chapter": "08 - Of Time and Memory", "chapterNum": "08"}, {"term": "Theory of Illumination", "definition": "A concept borrowed from Henry James: other characters in a story \"light up\" different facets of the main character through their interactions with them, revealing dimensions of the protagonist that couldn't be shown any other way.", "book": "Screenwriter's Workbook", "chapter": "06 - The Tools of Character", "chapterNum": "06"}, {"term": "Three Diagnostic Essays (Rewrite)", "definition": "A self-assessment exercise done before the mechanical rewrite: write short answers to (1) What originally attracted me to this idea? (2) What kind of story did I actually end up writing? and (3) What do I have to do to make what I did equal what I wanted to do? The exercise surfaces where a script has drifted from its original intention so the rewrite can correct it.", "book": "Screenwriter's Workbook", "chapter": "16 - The Rewrite", "chapterNum": "16"}, {"term": "Three Stages of the First Draft", "definition": "Field's model of a screenplay's rewrite process as three distinct, separable stages, each with its own character: the words-on-paper draft (getting the whole story down), the mechanical draft (correcting story-line drift and bringing the script to proper length, not a creative pass), and the polish draft (line-by-line, scene-by-scene refinement to produce the best possible read).", "book": "Screenwriter's Workbook", "chapter": "16 - The Rewrite", "chapterNum": "16"}, {"term": "Time Frame (Act II Duration Decision)", "definition": "The deliberate choice of how much story-time Act II covers (hours, weeks, or years), made before outlining scenes. Leaving this undefined tends to cause new writers to scatter incidents randomly; deciding it up front lets devices like seasonal change, on-screen dates, or references to real calendar events be used intentionally to show time passing.", "book": "Screenwriter's Workbook", "chapter": "13 - First Half, Second Half", "chapterNum": "13"}, {"term": "Transitions", "definition": "The visual and audio bridges written between scenes — Field argues writing these is the screenwriter's job, not the director's or editor's, and a mark of professional craft. The four basic types are picture-to-picture, sound-to-sound, music-to-music, and effect-to-effect (dissolves, smash cuts, fade-outs); the rule of thumb is that if an audience consciously notices a transition, it probably isn't working.", "book": "Screenwriter's Workbook", "chapter": "14 - Writing Act II", "chapterNum": "14"}];</script>
+<script>
+(function(){
+
+/* ---------------- Static reference data ---------------- */
+
+var ROADMAP = [
+  {id:'p0', title:'Before You Write a Page', steps:[
+    {id:'s00', text:"Read the Introduction and “The Blank Page” — get past the blank-page fear; understand that structure comes before writing."},
+    {id:'s01', text:"Read “About Structure” and “The Paradigm” — internalize the three-act paradigm (Set-Up / Confrontation / Resolution) and Plot Points I & II."}
+  ]},
+  {id:'p1', title:'Subject & Character', steps:[
+    {id:'s02', text:"Do the Four Pages exercise: write four pages — subject, character bio, ending, beginning — before anything else.", linkTab:'treatment'},
+    {id:'s03', text:"Build your character: dramatic need, point of view, attitude, capacity for change, biography.", linkTab:'characters'},
+    {id:'s04', text:"Find your character’s Circle of Being — the formative incident (age 9–18) behind their present-day wound. Keep it off the page; let it explain behavior instead.", linkTab:'characters'},
+    {id:'s05', text:"Decide on a back story and where it sits in time — the charged incident just before page one.", linkTab:'characters'}
+  ]},
+  {id:'p2', title:'Cards & Act I', steps:[
+    {id:'s06', text:"Build your Act I card stack: ending → beginning → Plot Point I. Aim for ~14 cards.", linkTab:'cards'},
+    {id:'s07', text:"Write pages 1–10 as pure Set-Up — establish story, main character, dramatic premise, situation.", linkTab:'cards'},
+    {id:'s08', text:"Write pages 11–30 — “a day in the life” (11–20), then bridge into Plot Point I (21–30).", linkTab:'cards'},
+    {id:'s09', text:"Confirm Plot Point I lands around page 25–27 and spins the story into Act II.", linkTab:'structuremap'}
+  ]},
+  {id:'p3', title:'Act II', steps:[
+    {id:'s10', text:"Find your Mid-Point — the page-~60 event that splits Act II into two workable halves. Card the first half only once you know it.", linkTab:'cards'},
+    {id:'s11', text:"Set the sub-dramatic context for each half and place Pinch I (~pg 45) and Pinch II (~pg 75).", linkTab:'cards'},
+    {id:'s12', text:"Write Act II in two 30-page passes, first half then second, using the Mid-Point and Pinches as checkpoints so neither half drifts.", linkTab:'critic'},
+    {id:'s13', text:"Confirm Plot Point II lands around page 85–90 and spins the story into Act III.", linkTab:'structuremap'}
+  ]},
+  {id:'p4', title:'Act III', steps:[
+    {id:'s14', text:"Write the Resolution — this is where the story is resolved, not where new plot is introduced.", linkTab:'cards'}
+  ]},
+  {id:'p5', title:'Rewrite', steps:[
+    {id:'s15', text:"Set the draft aside, then rewrite using a full checklist pass — structure first, then scenes, then dialogue/description line edits.", linkTab:'rewrite'},
+    {id:'s16', text:"Run the “good read” pass — the final polish check before showing it to anyone.", linkTab:'coverage'}
+  ]}
+];
+
+var REWRITE_CHECKLIST = [
+  {id:'r0', title:'Structure Pass', steps:[
+    {id:'r00', text:'Read the whole draft straight through without stopping to fix anything.'},
+    {id:'r01', text:'Confirm the ending and beginning still work together.'},
+    {id:'r02', text:'Confirm Plot Point I, the Mid-Point, and Plot Point II still land in the right place and still turn the story.'},
+    {id:'r03', text:'Check that each act is still doing its job (Set-Up / Confrontation / Resolution).'}
+  ]},
+  {id:'r1', title:'Scene Pass', steps:[
+    {id:'r10', text:'For every scene, confirm it has a purpose — advances the plot or reveals character.'},
+    {id:'r11', text:'Cut or combine any scene that doesn’t earn its place.'},
+    {id:'r12', text:'Check “enter late, leave early” on every scene — trim the run-up and the tail.'},
+    {id:'r13', text:'Confirm each sequence still functions as its own mini-story with a clear dramatic question.'}
+  ]},
+  {id:'r2', title:'Dialogue & Description Pass', steps:[
+    {id:'r20', text:'Cut “on the nose” dialogue that says exactly what a character means.'},
+    {id:'r21', text:'Read the dialogue aloud — does it sound like a person, not a writer?'},
+    {id:'r22', text:'Trim excess description — a screenplay is meant to be read fast.'}
+  ]},
+  {id:'r3', title:'The Good Read', steps:[
+    {id:'r30', text:'Fix typos, formatting, and page-count issues.'},
+    {id:'r31', text:'Would a stranger reading this want to turn the page?'},
+    {id:'r32', text:'Get one outside read before calling it done.'}
+  ]}
+];
+
+var COLUMNS = [
+  {id:'act1', title:'Act I — Set-Up'},
+  {id:'act2a', title:'Act II — First Half'},
+  {id:'act2b', title:'Act II — Second Half'},
+  {id:'act3', title:'Act III — Resolution'}
+];
+
+var TAGS = ['', 'Beginning', 'Plot Point I', 'Pinch I', 'Mid-Point', 'Pinch II', 'Plot Point II', 'Ending'];
+
+/* Canonical position of each checkpoint as a fraction of total page count (Field's approximate page numbers on a ~110pg script) */
+var CHECKPOINT_POS = {
+  'Beginning': 0.02, 'Plot Point I': 0.23, 'Pinch I': 0.41, 'Mid-Point': 0.50,
+  'Pinch II': 0.68, 'Plot Point II': 0.80, 'Ending': 0.98
+};
+var CHECKPOINT_ORDER = ['Beginning', 'Plot Point I', 'Pinch I', 'Mid-Point', 'Pinch II', 'Plot Point II', 'Ending'];
+
+var SCENE_PURPOSES = ['', 'Plot', 'Character', 'Both'];
+
+/* Glossary term (lowercased, exact match) -> the tab that actually implements it, for the "Open in ___" chip */
+var GLOSSARY_LINKS = {
+  'plot point': 'cards', 'plot point i': 'cards', 'plot point ii': 'cards',
+  'mid-point': 'cards', 'midpoint': 'cards',
+  'pinch': 'cards', 'pinch i': 'cards', 'pinch ii': 'cards',
+  'beginning': 'cards', 'ending': 'cards',
+  'circle of being': 'characters', 'back story': 'characters', 'backstory': 'characters',
+  'dramatic need': 'characters', 'point of view': 'characters', 'capacity for change': 'characters',
+  'sequence': 'sequences',
+  'four pages': 'treatment', 'the four pages': 'treatment',
+  'coverage': 'coverage',
+  'structure map': 'structuremap', 'the paradigm': 'structuremap', 'paradigm': 'structuremap',
+  'the critic’s page': 'critic', 'critic’s page': 'critic'
+};
+
+var GLOSSARY = window.__GLOSSARY__ || [];
+
+function exampleCards(){
+  return [
+    {id:cid(), col:'act1', text:'Example: ordinary world — establish who she is before anything breaks.', tag:'Beginning'},
+    {id:cid(), col:'act1', text:'Example: the incident that hooks the action and spins it into Act II.', tag:'Plot Point I'},
+    {id:cid(), col:'act2a', text:'Example: stabilizing sequence — keeps the first 30 pages of Act II on track.', tag:'Pinch I'},
+    {id:cid(), col:'act2a', text:'Example: the page-~60 event that reframes everything before it.', tag:'Mid-Point'},
+    {id:cid(), col:'act2b', text:'Example: second stabilizing sequence, ~pg 75.', tag:'Pinch II'},
+    {id:cid(), col:'act2b', text:'Example: the incident that spins the story into Act III.', tag:'Plot Point II'},
+    {id:cid(), col:'act3', text:'Example: the story resolves — no new plot introduced here.', tag:'Ending'}
+  ];
+}
+
+/* ---------------- Utilities ---------------- */
+function cid(){ return 'c' + Math.random().toString(36).slice(2,10); }
+function pid(){ return 'p' + Math.random().toString(36).slice(2,10); }
+function esc(s){ return (s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+function findGlossaryLink(term){
+  var t = (term||'').toLowerCase();
+  var bestKey = null;
+  Object.keys(GLOSSARY_LINKS).forEach(function(key){
+    if(t.indexOf(key) !== -1 && (!bestKey || key.length > bestKey.length)) bestKey = key;
+  });
+  return bestKey ? GLOSSARY_LINKS[bestKey] : null;
+}
+
+/* ---------------- Storage layer (db capability, localStorage fallback) ---------------- */
+/*
+ * Storage layer. Deliberately NOT using a live onSnapshot subscription:
+ * a real-time listener re-fires (with hasPendingWrites echoes) on every
+ * write this same tab makes, and re-rendering from that would blow away
+ * whatever the user is mid-typing. Every mutation below is applied to the
+ * in-memory `state.projects` object FIRST (by the caller, before calling
+ * store.update/create/remove) and persisted to storage as a fire-and-forget
+ * background write — state.projects is the single source of truth for
+ * rendering, storage is just where it's backed up to.
+ */
+var store = {
+  mode: 'local',
+  db: null,
+  async init(){
+    try{
+      var db = await claude.use('db');
+      if(db){ this.db = db; this.mode = 'db'; }
+    }catch(e){}
+    if(this.mode === 'local' && !localStorage.getItem('sd_projects_v1')){
+      localStorage.setItem('sd_projects_v1', JSON.stringify({}));
+    }
+  },
+  async fetchAll(){
+    if(this.mode === 'db'){
+      var snap = await this.db.collection('projects').get();
+      var out = [];
+      snap.docs.forEach(function(d){ if(d.exists){ var data = d.data(); data.id = d.id; out.push(data); } });
+      out.sort(function(a,b){ return (a.createdAt||0) - (b.createdAt||0); });
+      return out;
+    } else {
+      var all = JSON.parse(localStorage.getItem('sd_projects_v1') || '{}');
+      var out2 = Object.keys(all).map(function(k){ var v = all[k]; v.id = k; return v; });
+      out2.sort(function(a,b){ return (a.createdAt||0) - (b.createdAt||0); });
+      return out2;
+    }
+  },
+  /** Creates the project in storage and returns the full object (with id) — caller pushes it into state.projects. */
+  async create(data){
+    data.createdAt = Date.now(); data.updatedAt = Date.now();
+    if(this.mode === 'db'){
+      var ref = await this.db.collection('projects').add(data);
+      data.id = ref.id;
+      return data;
+    } else {
+      var all = JSON.parse(localStorage.getItem('sd_projects_v1') || '{}');
+      var id = pid();
+      all[id] = data;
+      localStorage.setItem('sd_projects_v1', JSON.stringify(all));
+      data.id = id;
+      return data;
+    }
+  },
+  /** Fire-and-forget background save. Caller must already have applied this same change to the in-memory project object. */
+  update(id, patch){
+    patch.updatedAt = Date.now();
+    if(this.mode === 'db'){
+      this.db.collection('projects').doc(id).update(patch).catch(function(e){ console.error('Screenwriting Desk: save failed', e); });
+    } else {
+      var all = JSON.parse(localStorage.getItem('sd_projects_v1') || '{}');
+      if(!all[id]) return;
+      Object.keys(patch).forEach(function(k){
+        if(k === 'roadmap' && all[id].roadmap){
+          Object.assign(all[id].roadmap, patch.roadmap);
+        } else {
+          all[id][k] = patch[k];
+        }
+      });
+      localStorage.setItem('sd_projects_v1', JSON.stringify(all));
+    }
+  },
+  /** Fire-and-forget background delete. Caller must already have removed it from state.projects. */
+  remove(id){
+    if(this.mode === 'db'){
+      this.db.collection('projects').doc(id).delete().catch(function(e){ console.error('Screenwriting Desk: delete failed', e); });
+    } else {
+      var all = JSON.parse(localStorage.getItem('sd_projects_v1') || '{}');
+      delete all[id];
+      localStorage.setItem('sd_projects_v1', JSON.stringify(all));
+    }
+  }
+};
+
+/* ---------------- App state ---------------- */
+var state = { projects: [], currentId: null, tab: 'roadmap', glossQuery: '', glossBook: 'All' };
+
+var TAB_META = {
+  roadmap: {title:'Roadmap', desc:'Follow it in sequence while actually writing a screenplay.'},
+  treatment: {title:'Treatment', desc:'The Four Pages exercise — a short prose treatment before you write a single scene.'},
+  characters: {title:'Characters', desc:'Dramatic need, point of view, back story, Circle of Being — and how each person changes.'},
+  sequences: {title:'Sequences', desc:'Break the story into mini-movies, each with its own dramatic question.'},
+  cards: {title:'Cards', desc:'The 3×5 card method — drag scenes between acts, pin your checkpoints.'},
+  critic: {title:'Critic’s Page', desc:'A running log for the self-critical voice while you draft — reread it later, not now.'},
+  structuremap: {title:'Structure Map', desc:'Your checkpoints, plotted to scale across the page count.'},
+  rewrite: {title:'Rewrite Checklist', desc:'Repeatable, pass by pass — reset it and run it again on the next draft.'},
+  coverage: {title:'Coverage', desc:'A formal reader’s coverage report on your own finished draft.'},
+  submission: {title:'Submission', desc:'Protect the script, then track who you sent it to.'},
+  glossary: {title:'Glossary', desc:'Every load-bearing term across all three books, searchable.'}
+};
+
+function currentProject(){
+  return state.projects.find(function(p){ return p.id === state.currentId; }) || null;
+}
+
+/* ---------------- Rendering ---------------- */
+function renderSidebar(){
+  var list = document.getElementById('projectList');
+  list.innerHTML = '';
+  state.projects.forEach(function(p){
+    var row = document.createElement('div');
+    row.className = 'project-row' + (p.id === state.currentId ? ' active' : '');
+    var btn = document.createElement('button');
+    btn.className = 'project-btn';
+    var stepsDone = p.roadmap ? Object.values(p.roadmap).filter(Boolean).length : 0;
+    btn.innerHTML = '<span class="name"></span><span class="meta mono"></span>';
+    btn.querySelector('.name').textContent = p.name || 'Untitled';
+    btn.querySelector('.meta').textContent = stepsDone + '/17 · ' + (p.cards ? p.cards.length : 0) + ' cards · ' + (p.characters ? p.characters.length : 0) + ' chars';
+    btn.onclick = function(){ state.currentId = p.id; renderAll(); };
+    btn.ondblclick = function(){ startRename(p, btn); };
+    var del = document.createElement('button');
+    del.className = 'icon-btn';
+    del.title = 'Delete project';
+    del.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+    var armed = false, armTimer = null;
+    del.onclick = function(e){
+      e.stopPropagation();
+      if(!armed){
+        armed = true;
+        del.classList.add('armed');
+        del.title = 'Click again to delete permanently';
+        del.innerHTML = 'Delete?';
+        armTimer = setTimeout(function(){
+          armed = false;
+          del.classList.remove('armed');
+          del.title = 'Delete project';
+          del.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+        }, 2500);
+        return;
+      }
+      clearTimeout(armTimer);
+      store.remove(p.id);
+      state.projects = state.projects.filter(function(x){ return x.id !== p.id; });
+      if(state.currentId === p.id) state.currentId = null;
+      renderAll();
+    };
+    row.appendChild(btn);
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+function startRename(p, btn){
+  var input = document.createElement('input');
+  input.className = 'rename-input';
+  input.value = p.name || '';
+  btn.innerHTML = '';
+  btn.appendChild(input);
+  input.focus(); input.select();
+  function commit(){
+    var v = input.value.trim() || 'Untitled';
+    p.name = v;
+    store.update(p.id, {name: v});
+    renderSidebar();
+  }
+  input.onblur = commit;
+  input.onkeydown = function(e){ if(e.key === 'Enter'){ input.blur(); } };
+}
+
+function renderAll(){
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.tab === state.tab);
+  });
+  document.getElementById('tabTitle').textContent = TAB_META[state.tab].title;
+  document.getElementById('tabDesc').textContent = TAB_META[state.tab].desc;
+  document.getElementById('statusLine').textContent = store.mode === 'db' ? 'saved to your account' : 'saved in this browser';
+  renderSidebar();
+  var content = document.getElementById('content');
+  var proj = currentProject();
+  if(!proj){
+    content.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.className = 'empty-state';
+    wrap.innerHTML = '<div class="display">No project selected</div><div>Create a project to start tracking your roadmap progress and building your card stack.</div>';
+    var btn = document.createElement('button');
+    btn.textContent = '+ New project';
+    btn.onclick = createProject;
+    wrap.appendChild(btn);
+    content.appendChild(wrap);
+    return;
+  }
+  if(state.tab === 'roadmap') renderRoadmap(content, proj);
+  else if(state.tab === 'treatment') renderTreatment(content, proj);
+  else if(state.tab === 'characters') renderCharacters(content, proj);
+  else if(state.tab === 'sequences') renderSequences(content, proj);
+  else if(state.tab === 'cards') renderCards(content, proj);
+  else if(state.tab === 'critic') renderCritic(content, proj);
+  else if(state.tab === 'structuremap') renderStructureMap(content, proj);
+  else if(state.tab === 'rewrite') renderRewrite(content, proj);
+  else if(state.tab === 'coverage') renderCoverage(content, proj);
+  else if(state.tab === 'submission') renderSubmission(content, proj);
+  else renderGlossary(content);
+}
+
+function renderRoadmap(content, proj){
+  content.innerHTML = '';
+  var totalSteps = ROADMAP.reduce(function(n,ph){ return n + ph.steps.length; }, 0);
+  var done = proj.roadmap ? Object.values(proj.roadmap).filter(Boolean).length : 0;
+
+  var pw = document.createElement('div');
+  pw.className = 'progress-wrap';
+  pw.innerHTML = '<div class="progress-track"><div class="progress-fill"></div></div>' +
+    '<div class="progress-label"><span class="mono"></span> steps done</div>';
+  var pwFill = pw.querySelector('.progress-fill');
+  var pwCount = pw.querySelector('.mono');
+  function refreshTotals(){
+    var d = proj.roadmap ? Object.values(proj.roadmap).filter(Boolean).length : 0;
+    pwFill.style.width = Math.round(d/totalSteps*100) + '%';
+    pwCount.textContent = d + '/' + totalSteps;
+  }
+  refreshTotals();
+  content.appendChild(pw);
+
+  ROADMAP.forEach(function(phase, pi){
+    var doneInPhase = phase.steps.filter(function(s){ return proj.roadmap && proj.roadmap[s.id]; }).length;
+    var el = document.createElement('div');
+    el.className = 'phase' + (doneInPhase === phase.steps.length ? '' : (pi === firstOpenPhaseIndex(proj) ? ' open' : ''));
+    el.innerHTML =
+      '<div class="phase-head">' +
+        '<span class="phase-num">' + (pi+1) + '</span>' +
+        '<span class="phase-title">' + esc(phase.title) + '</span>' +
+        '<span class="phase-count mono">' + doneInPhase + '/' + phase.steps.length + '</span>' +
+        '<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 6 6 6-6 6"/></svg>' +
+      '</div>' +
+      '<div class="phase-steps"></div>';
+    el.querySelector('.phase-head').onclick = function(){ el.classList.toggle('open'); };
+    var phaseCountEl = el.querySelector('.phase-count');
+    var stepsWrap = el.querySelector('.phase-steps');
+    phase.steps.forEach(function(step){
+      var checked = !!(proj.roadmap && proj.roadmap[step.id]);
+      var row = document.createElement('div');
+      row.className = 'step' + (checked ? ' done' : '');
+      var cbId = 'cb_' + step.id;
+      row.innerHTML = '<input type="checkbox" id="' + cbId + '" ' + (checked?'checked':'') + '><div class="step-row"><label for="' + cbId + '"></label></div>';
+      row.querySelector('label').textContent = step.text;
+      if(step.linkTab && TAB_META[step.linkTab]){
+        var jump = document.createElement('button');
+        jump.className = 'jump-link';
+        jump.type = 'button';
+        jump.textContent = '→ ' + TAB_META[step.linkTab].title;
+        jump.onclick = function(e){ e.stopPropagation(); state.tab = step.linkTab; renderAll(); };
+        row.querySelector('.step-row').appendChild(jump);
+      }
+      row.querySelector('input').onchange = function(e){
+        if(!proj.roadmap) proj.roadmap = {};
+        proj.roadmap[step.id] = e.target.checked;
+        store.update(proj.id, {roadmap: proj.roadmap});
+        row.classList.toggle('done', e.target.checked);
+        var nowDone = phase.steps.filter(function(s){ return proj.roadmap[s.id]; }).length;
+        phaseCountEl.textContent = nowDone + '/' + phase.steps.length;
+        refreshTotals();
+      };
+      stepsWrap.appendChild(row);
+    });
+    content.appendChild(el);
+  });
+
+  var cp = document.createElement('div');
+  cp.className = 'checkpoint-strip';
+  cp.innerHTML = '<div class="display">Full checkpoint chain to keep visible while drafting</div>' +
+    '<div class="chain">Beginning → Plot Point I → Pinch I → Mid-Point → Pinch II → Plot Point II → Resolution</div>';
+  content.appendChild(cp);
+}
+
+function firstOpenPhaseIndex(proj){
+  for(var i=0;i<ROADMAP.length;i++){
+    var incomplete = ROADMAP[i].steps.some(function(s){ return !(proj.roadmap && proj.roadmap[s.id]); });
+    if(incomplete) return i;
+  }
+  return 0;
+}
+
+/* ---------------- Characters ---------------- */
+var openCharId = null;
+
+function makeField(obj, key, label, placeholder, saveFn, multiline){
+  var wrap = document.createElement('div');
+  wrap.className = 'field';
+  var lab = document.createElement('div');
+  lab.className = 'field-label';
+  lab.textContent = label;
+  wrap.appendChild(lab);
+  var input = document.createElement(multiline ? 'textarea' : 'input');
+  if(!multiline) input.type = 'text';
+  input.value = obj[key] || '';
+  input.placeholder = placeholder || '';
+  input.oninput = function(){ obj[key] = input.value; };
+  input.onblur = function(){ saveFn(); };
+  wrap.appendChild(input);
+  return wrap;
+}
+
+/* ---------------- Treatment (Four Pages exercise) ---------------- */
+function renderTreatment(content, proj){
+  content.innerHTML = '';
+  if(!proj.treatment) proj.treatment = {};
+  var t = proj.treatment;
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">Field\'s “kick in the ass” exercise: a short prose treatment, written before a single scene, that forces the whole story into focus. The lengths below are guides, not limits.</div>';
+  content.appendChild(toolbar);
+
+  function save(){ store.update(proj.id, {treatment: t}); }
+  function fld(key, label, note, multiline){
+    var wrap = makeField(t, key, label, '', save, multiline !== false);
+    if(note){
+      var n = document.createElement('div');
+      n.className = 'treatment-note';
+      n.textContent = note;
+      wrap.insertBefore(n, wrap.querySelector('textarea, input'));
+    }
+    return wrap;
+  }
+
+  var g1 = document.createElement('div');
+  g1.className = 'field-grid full';
+  g1.appendChild(fld('opening', 'Opening', '~half a page — a dramatic recreation of your first scene, not a summary of it.'));
+  content.appendChild(g1);
+
+  var g2 = document.createElement('div');
+  g2.className = 'field-grid full';
+  g2.appendChild(fld('act1Synopsis', 'Act I — narrative synopsis', '~half a page.'));
+  g2.appendChild(fld('plotPoint1', 'Plot Point I', '~half a page — the incident that spins the story into Act II.'));
+  content.appendChild(g2);
+
+  var sub = document.createElement('div');
+  sub.className = 'subhead';
+  sub.textContent = 'Act II obstacles';
+  content.appendChild(sub);
+  var obGrid = document.createElement('div');
+  obGrid.className = 'obstacle-grid';
+  for(var i=1;i<=4;i++){
+    (function(n){
+      obGrid.appendChild(makeField(t, 'obstacle'+n, 'Obstacle ' + n, 'A concrete thing standing between your character and their need', save));
+    })(i);
+  }
+  content.appendChild(obGrid);
+
+  var g3 = document.createElement('div');
+  g3.className = 'field-grid full';
+  g3.appendChild(fld('act2Synopsis', 'Act II — narrative synopsis', '~1 page.'));
+  g3.appendChild(fld('plotPoint2', 'Plot Point II', '~half a page — the incident that spins the story into Act III.'));
+  g3.appendChild(fld('act3Synopsis', 'Act III — synopsis', '~half a page.'));
+  g3.appendChild(fld('ending', 'Ending', '~half a page — how it resolves.'));
+  content.appendChild(g3);
+}
+
+function renderCharacters(content, proj){
+  content.innerHTML = '';
+  if(!proj.characters) proj.characters = [];
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">Dramatic need drives every choice a character makes; the arc tracks how that changes across the story.</div>';
+  content.appendChild(toolbar);
+
+  var list = document.createElement('div');
+  list.className = 'char-list';
+
+  function save(){ store.update(proj.id, {characters: proj.characters}); }
+
+  proj.characters.forEach(function(ch){
+    var card = document.createElement('div');
+    card.className = 'char-card' + (openCharId === ch.id ? ' open' : '');
+
+    var head = document.createElement('div');
+    head.className = 'char-head';
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = ch.name || '';
+    nameInput.placeholder = 'Character name';
+    nameInput.oninput = function(){ ch.name = nameInput.value; };
+    nameInput.onblur = save;
+    nameInput.onclick = function(e){ e.stopPropagation(); };
+    var needPreview = document.createElement('div');
+    needPreview.className = 'need-preview';
+    needPreview.textContent = ch.dramaticNeed || '';
+    var chevron = document.createElement('svg');
+    chevron.setAttribute('class','chevron');
+    chevron.setAttribute('viewBox','0 0 24 24');
+    chevron.innerHTML = '<path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.5"/>';
+    var delBtn = document.createElement('button');
+    delBtn.className = 'icon-btn';
+    delBtn.title = 'Delete character';
+    delBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    delBtn.onclick = function(e){
+      e.stopPropagation();
+      proj.characters = proj.characters.filter(function(c){ return c.id !== ch.id; });
+      save(); renderAll();
+    };
+    head.appendChild(nameInput);
+    head.appendChild(needPreview);
+    head.appendChild(delBtn);
+    head.appendChild(chevron);
+    head.onclick = function(){
+      openCharId = (openCharId === ch.id) ? null : ch.id;
+      card.classList.toggle('open');
+    };
+
+    var body = document.createElement('div');
+    body.className = 'char-body';
+
+    var sub1 = document.createElement('div');
+    sub1.className = 'subhead';
+    sub1.textContent = 'Characterization';
+    body.appendChild(sub1);
+
+    var grid1 = document.createElement('div');
+    grid1.className = 'field-grid';
+    grid1.appendChild(makeField(ch, 'dramaticNeed', 'Dramatic Need', 'What do they want or need to resolve their life?', function(){ needPreview.textContent = ch.dramaticNeed || ''; save(); }, true));
+    grid1.appendChild(makeField(ch, 'pointOfView', 'Point of View', 'Their way of looking at the world', save));
+    grid1.appendChild(makeField(ch, 'attitude', 'Attitude', 'How that POV expresses itself in behavior', save));
+    grid1.appendChild(makeField(ch, 'capacityForChange', 'Capacity for Change', 'What could shift by the end?', save));
+    body.appendChild(grid1);
+
+    var gridFull = document.createElement('div');
+    gridFull.className = 'field-grid full';
+    gridFull.appendChild(makeField(ch, 'biography', 'Biography (interior life, before page 1)', 'Who are they before the story starts?', save, true));
+    body.appendChild(gridFull);
+
+    var grid2 = document.createElement('div');
+    grid2.className = 'field-grid';
+    grid2.appendChild(makeField(ch, 'professional', 'Professional Life', '', save));
+    grid2.appendChild(makeField(ch, 'personal', 'Personal Life', '', save));
+    grid2.appendChild(makeField(ch, 'private', 'Private Life', '', save));
+    body.appendChild(grid2);
+
+    var sub2 = document.createElement('div');
+    sub2.className = 'subhead';
+    sub2.textContent = 'Arc';
+    body.appendChild(sub2);
+
+    var gridFull2 = document.createElement('div');
+    gridFull2.className = 'field-grid full';
+    gridFull2.appendChild(makeField(ch, 'circleOfBeing', 'Circle of Being (formative incident, age 9–18)', 'The unstated wound behind their present-day behavior', save, true));
+    gridFull2.appendChild(makeField(ch, 'backStory', 'Back Story', 'The charged incident just before page one', save, true));
+    body.appendChild(gridFull2);
+
+    var arcRow = document.createElement('div');
+    arcRow.className = 'arc-row';
+    arcRow.appendChild(makeField(ch, 'arcActI', 'Act I — starting state', '', save, true));
+    arcRow.appendChild(makeField(ch, 'arcMidPoint', 'Mid-Point — the shift', '', save, true));
+    arcRow.appendChild(makeField(ch, 'arcActIII', 'Act III — resolved state', '', save, true));
+    body.appendChild(arcRow);
+
+    card.appendChild(head);
+    card.appendChild(body);
+    list.appendChild(card);
+  });
+
+  content.appendChild(list);
+
+  var addBtn = document.createElement('button');
+  addBtn.className = 'add-row-btn';
+  addBtn.textContent = '+ Add character';
+  addBtn.onclick = function(){
+    var ch = {id:cid(), name:'', dramaticNeed:''};
+    proj.characters.push(ch);
+    openCharId = ch.id;
+    save();
+    renderAll();
+  };
+  content.appendChild(addBtn);
+}
+
+/* ---------------- Sequences ---------------- */
+function renderSequences(content, proj){
+  content.innerHTML = '';
+  if(!proj.sequences) proj.sequences = [];
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">Roughly 8–10 sequences make a feature — each is its own mini-story with a beginning, middle, and end. Assign cards to a sequence from the Cards tab.</div>';
+  content.appendChild(toolbar);
+
+  var list = document.createElement('div');
+  list.className = 'seq-list';
+
+  function save(){ store.update(proj.id, {sequences: proj.sequences}); }
+  function cardsFor(seqId){ return (proj.cards||[]).filter(function(c){ return c.sequenceId === seqId; }); }
+  var COL_LABEL = {act1:'Act I', act2a:'Act II-A', act2b:'Act II-B', act3:'Act III'};
+
+  proj.sequences.forEach(function(seq, i){
+    var row = document.createElement('div');
+    row.className = 'seq-row';
+
+    var order = document.createElement('div');
+    order.className = 'seq-order mono';
+    order.textContent = i+1;
+
+    var fields = document.createElement('div');
+    fields.className = 'seq-fields';
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.className = 'seq-name';
+    nameInput.value = seq.name || '';
+    nameInput.placeholder = 'Sequence name (e.g. “The Chase”)';
+    nameInput.oninput = function(){ seq.name = nameInput.value; };
+    nameInput.onblur = save;
+    var qInput = document.createElement('input');
+    qInput.type = 'text';
+    qInput.value = seq.question || '';
+    qInput.placeholder = 'One-line dramatic question — what has to be resolved by the end of this sequence?';
+    qInput.oninput = function(){ seq.question = qInput.value; };
+    qInput.onblur = save;
+    var linkedCards = cardsFor(seq.id);
+    var toggle = document.createElement('button');
+    toggle.className = 'seq-toggle';
+    toggle.type = 'button';
+    toggle.textContent = linkedCards.length + ' card' + (linkedCards.length === 1 ? '' : 's') + (linkedCards.length ? ' ▾' : '');
+    var cardsWrap = document.createElement('div');
+    cardsWrap.className = 'seq-cards';
+    cardsWrap.style.display = 'none';
+    linkedCards.forEach(function(c){
+      var item = document.createElement('div');
+      item.className = 'seq-card-item';
+      item.innerHTML = '<span class="col-tag mono"></span><span></span>';
+      item.querySelector('.col-tag').textContent = COL_LABEL[c.col] || c.col;
+      item.querySelector('span:last-child').textContent = c.text || '(untitled card)';
+      item.style.cursor = 'pointer';
+      item.title = 'Open in Cards';
+      item.onclick = function(){ state.tab = 'cards'; renderAll(); };
+      cardsWrap.appendChild(item);
+    });
+    toggle.onclick = function(){
+      if(!linkedCards.length) return;
+      var open = cardsWrap.style.display !== 'none';
+      cardsWrap.style.display = open ? 'none' : 'flex';
+      toggle.textContent = linkedCards.length + ' card' + (linkedCards.length === 1 ? '' : 's') + (open ? ' ▾' : ' ▴');
+    };
+    fields.appendChild(nameInput);
+    fields.appendChild(qInput);
+    fields.appendChild(toggle);
+    fields.appendChild(cardsWrap);
+
+    var actions = document.createElement('div');
+    actions.className = 'seq-actions';
+    var up = document.createElement('button');
+    up.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m18 15-6-6-6 6"/></svg>';
+    up.disabled = (i === 0);
+    up.onclick = function(){
+      proj.sequences.splice(i-1, 0, proj.sequences.splice(i,1)[0]);
+      save(); renderAll();
+    };
+    var down = document.createElement('button');
+    down.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>';
+    down.disabled = (i === proj.sequences.length - 1);
+    down.onclick = function(){
+      proj.sequences.splice(i+1, 0, proj.sequences.splice(i,1)[0]);
+      save(); renderAll();
+    };
+    var del = document.createElement('button');
+    del.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    del.onclick = function(){
+      proj.sequences = proj.sequences.filter(function(s){ return s.id !== seq.id; });
+      (proj.cards||[]).forEach(function(c){ if(c.sequenceId === seq.id) c.sequenceId = ''; });
+      store.update(proj.id, {sequences: proj.sequences, cards: proj.cards});
+      renderAll();
+    };
+    actions.appendChild(up); actions.appendChild(down); actions.appendChild(del);
+
+    row.appendChild(order);
+    row.appendChild(fields);
+    row.appendChild(actions);
+    list.appendChild(row);
+  });
+
+  content.appendChild(list);
+
+  var addBtn = document.createElement('button');
+  addBtn.className = 'add-row-btn';
+  addBtn.textContent = '+ Add sequence';
+  addBtn.onclick = function(){
+    proj.sequences.push({id:cid(), name:'', question:''});
+    save(); renderAll();
+  };
+  content.appendChild(addBtn);
+}
+
+/* ---------------- Structure Map ---------------- */
+function renderStructureMap(content, proj){
+  content.innerHTML = '';
+  var target = proj.targetPages || 110;
+
+  var controls = document.createElement('div');
+  controls.className = 'map-controls';
+  controls.innerHTML = '<span>Target screenplay length:</span>';
+  var input = document.createElement('input');
+  input.type = 'text'; input.inputMode = 'numeric';
+  input.value = target;
+  input.onblur = function(){
+    var v = parseInt(input.value, 10);
+    if(!v || v < 30) v = 110;
+    proj.targetPages = v;
+    store.update(proj.id, {targetPages: v});
+    renderStructureMap(content, proj);
+  };
+  controls.appendChild(input);
+  var pagesLabel = document.createElement('span');
+  pagesLabel.textContent = 'pages';
+  controls.appendChild(pagesLabel);
+  content.appendChild(controls);
+
+  var wrap = document.createElement('div');
+  wrap.className = 'map-ruler-wrap';
+  var ruler = document.createElement('div');
+  ruler.className = 'map-ruler';
+  var fill = document.createElement('div');
+  fill.className = 'map-fill';
+  ruler.appendChild(fill);
+
+  var labels = document.createElement('div');
+  labels.className = 'map-labels';
+
+  CHECKPOINT_ORDER.forEach(function(name, i){
+    var frac = CHECKPOINT_POS[name];
+    var pageNum = Math.round(frac * target);
+    var matchCard = (proj.cards||[]).find(function(c){ return c.tag === name; });
+
+    var marker = document.createElement('div');
+    marker.className = 'map-marker' + (matchCard ? ' filled' : '');
+    marker.style.left = (frac*100) + '%';
+    marker.title = matchCard ? (name + ' — ~pg ' + pageNum + ' (click to open in Cards)') : (name + ' — ~pg ' + pageNum);
+    marker.innerHTML = '<span class="dot"></span>';
+    if(matchCard) marker.onclick = function(){ state.tab = 'cards'; renderAll(); };
+    ruler.appendChild(marker);
+
+    var tick = document.createElement('div');
+    tick.className = 'map-tick' + (i % 2 ? ' row1' : '') + (matchCard ? ' linked' : '');
+    tick.style.left = (frac*100) + '%';
+    var snippetText = matchCard ? matchCard.text : 'Not placed yet — tag a card in Cards';
+    tick.innerHTML = '<div class="name"></div><div class="page mono"></div><div class="snippet' + (matchCard ? '' : ' empty') + '"></div>';
+    tick.querySelector('.name').textContent = name;
+    tick.querySelector('.page').textContent = 'pg ' + pageNum;
+    tick.querySelector('.snippet').textContent = snippetText || '(untitled card)';
+    if(matchCard) tick.querySelector('.name').onclick = function(){ state.tab = 'cards'; renderAll(); };
+    labels.appendChild(tick);
+  });
+
+  wrap.appendChild(ruler);
+  wrap.appendChild(labels);
+  content.appendChild(wrap);
+
+  var legend = document.createElement('div');
+  legend.className = 'map-legend';
+  legend.textContent = 'Positions are Field’s typical proportions, scaled to your target length — not a strict rule. Filled dots mean you’ve tagged a card with that checkpoint in the Cards tab.';
+  content.appendChild(legend);
+}
+
+/* ---------------- Rewrite Checklist ---------------- */
+function renderRewrite(content, proj){
+  content.innerHTML = '';
+  if(!proj.rewriteChecklist) proj.rewriteChecklist = {};
+  var totalSteps = REWRITE_CHECKLIST.reduce(function(n,s){ return n + s.steps.length; }, 0);
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">Run this pass by pass, in order. Unlike the Roadmap, this is meant to be reset and reused on every subsequent draft.</div>';
+  var resetBtn = document.createElement('button');
+  resetBtn.className = 'add-row-btn';
+  resetBtn.style.flex = 'none';
+  resetBtn.textContent = 'Reset checklist';
+  resetBtn.onclick = function(){
+    proj.rewriteChecklist = {};
+    store.update(proj.id, {rewriteChecklist: proj.rewriteChecklist});
+    renderRewrite(content, proj);
+  };
+  toolbar.appendChild(resetBtn);
+  content.appendChild(toolbar);
+
+  var pw = document.createElement('div');
+  pw.className = 'progress-wrap';
+  pw.innerHTML = '<div class="progress-track"><div class="progress-fill"></div></div>' +
+    '<div class="progress-label"><span class="mono"></span> items done</div>';
+  var pwFill = pw.querySelector('.progress-fill');
+  var pwCount = pw.querySelector('.mono');
+  function refreshTotals(){
+    var d = Object.values(proj.rewriteChecklist).filter(Boolean).length;
+    pwFill.style.width = Math.round(d/totalSteps*100) + '%';
+    pwCount.textContent = d + '/' + totalSteps;
+  }
+  refreshTotals();
+  content.appendChild(pw);
+
+  REWRITE_CHECKLIST.forEach(function(section, pi){
+    var doneInSection = section.steps.filter(function(s){ return proj.rewriteChecklist[s.id]; }).length;
+    var el = document.createElement('div');
+    el.className = 'phase' + (pi === 0 ? ' open' : '');
+    el.innerHTML =
+      '<div class="phase-head">' +
+        '<span class="phase-num">' + (pi+1) + '</span>' +
+        '<span class="phase-title">' + esc(section.title) + '</span>' +
+        '<span class="phase-count mono">' + doneInSection + '/' + section.steps.length + '</span>' +
+        '<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 6 6 6-6 6"/></svg>' +
+      '</div>' +
+      '<div class="phase-steps"></div>';
+    el.querySelector('.phase-head').onclick = function(){ el.classList.toggle('open'); };
+    var sectionCountEl = el.querySelector('.phase-count');
+    var stepsWrap = el.querySelector('.phase-steps');
+    section.steps.forEach(function(step){
+      var checked = !!proj.rewriteChecklist[step.id];
+      var row = document.createElement('div');
+      row.className = 'step' + (checked ? ' done' : '');
+      var cbId = 'rw_' + step.id;
+      row.innerHTML = '<input type="checkbox" id="' + cbId + '" ' + (checked?'checked':'') + '><label for="' + cbId + '"></label>';
+      row.querySelector('label').textContent = step.text;
+      row.querySelector('input').onchange = function(e){
+        proj.rewriteChecklist[step.id] = e.target.checked;
+        store.update(proj.id, {rewriteChecklist: proj.rewriteChecklist});
+        row.classList.toggle('done', e.target.checked);
+        var nowDone = section.steps.filter(function(s){ return proj.rewriteChecklist[s.id]; }).length;
+        sectionCountEl.textContent = nowDone + '/' + section.steps.length;
+        refreshTotals();
+      };
+      stepsWrap.appendChild(row);
+    });
+    content.appendChild(el);
+  });
+}
+
+/* ---------------- Coverage ---------------- */
+var COVERAGE_CATEGORIES = ['Character Design', 'Character Development', 'Dialogue', 'Structure Design', 'Structure Development', 'Pacing', 'Resolution'];
+var RATING_OPTIONS = ['', 'Excellent', 'Good', 'Fair', 'Poor'];
+var RECOMMENDATION_OPTIONS = ['', 'Pass', 'Consider', 'Recommend'];
+
+function renderCoverage(content, proj){
+  content.innerHTML = '';
+  if(!proj.coverage) proj.coverage = {ratings:{}};
+  if(!proj.coverage.ratings) proj.coverage.ratings = {};
+  var cov = proj.coverage;
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">The format a studio reader actually uses. Fill this out yourself, or better, hand it to someone else once the draft is done — a coverage report is only useful when it\'s honest.</div>';
+  content.appendChild(toolbar);
+
+  function save(){ store.update(proj.id, {coverage: cov}); }
+
+  var g1 = document.createElement('div');
+  g1.className = 'field-grid full';
+  g1.appendChild(makeField(cov, 'logline', 'Logline', 'One sentence — subject + character + conflict.', save, true));
+  g1.appendChild(makeField(cov, 'synopsis', 'Synopsis', 'A page or less.', save, true));
+  content.appendChild(g1);
+
+  var sub = document.createElement('div');
+  sub.className = 'subhead';
+  sub.textContent = 'Ratings';
+  content.appendChild(sub);
+
+  var grid = document.createElement('div');
+  grid.className = 'rating-grid';
+  COVERAGE_CATEGORIES.forEach(function(cat){
+    var row = document.createElement('div');
+    row.className = 'rating-row';
+    var name = document.createElement('span');
+    name.className = 'rname';
+    name.textContent = cat;
+    var sel = document.createElement('select');
+    RATING_OPTIONS.forEach(function(r){
+      var opt = document.createElement('option');
+      opt.value = r; opt.textContent = r || '—';
+      if(cov.ratings[cat] === r) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.onchange = function(){ cov.ratings[cat] = sel.value; save(); };
+    row.appendChild(name);
+    row.appendChild(sel);
+    grid.appendChild(row);
+  });
+  content.appendChild(grid);
+
+  var sub2 = document.createElement('div');
+  sub2.className = 'subhead';
+  sub2.textContent = 'Recommendation';
+  content.appendChild(sub2);
+
+  var recRow = document.createElement('div');
+  recRow.className = 'rec-row';
+  var recSel = document.createElement('select');
+  RECOMMENDATION_OPTIONS.forEach(function(r){
+    var opt = document.createElement('option');
+    opt.value = r; opt.textContent = r || 'Not set';
+    if(cov.recommendation === r) opt.selected = true;
+    recSel.appendChild(opt);
+  });
+  recSel.onchange = function(){ cov.recommendation = recSel.value; save(); };
+  recRow.appendChild(recSel);
+  content.appendChild(recRow);
+
+  var g2 = document.createElement('div');
+  g2.className = 'field-grid full';
+  g2.appendChild(makeField(cov, 'notes', 'Why', 'The reasoning behind the recommendation.', save, true));
+  content.appendChild(g2);
+}
+
+/* ---------------- Submission & Protection ---------------- */
+var SUBMISSION_STATUS = ['Sent', 'Passed', 'Requested More', 'Optioned', 'No Response'];
+
+function renderSubmission(content, proj){
+  content.innerHTML = '';
+  if(!proj.protection) proj.protection = {};
+  if(!proj.submissions) proj.submissions = [];
+  var prot = proj.protection;
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">Protect the script before it leaves your hands, then keep a record of where it went.</div>';
+  content.appendChild(toolbar);
+
+  function saveProt(){ store.update(proj.id, {protection: prot}); }
+  function saveSubs(){ store.update(proj.id, {submissions: proj.submissions}); }
+
+  var sub = document.createElement('div');
+  sub.className = 'subhead';
+  sub.textContent = 'Protection checklist';
+  content.appendChild(sub);
+
+  var protList = document.createElement('div');
+  protList.className = 'protection-list';
+  [
+    {key:'backedUp', label:'Backed up the script (more than one place)'},
+    {key:'registered', label:'Registered with the WGA or the U.S. Copyright Office'},
+    {key:'copiesMade', label:'Made physical/PDF copies ready to send'}
+  ].forEach(function(item){
+    var row = document.createElement('div');
+    row.className = 'protection-row';
+    var cbId = 'prot_' + item.key;
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.id = cbId;
+    cb.checked = !!prot[item.key];
+    cb.onchange = function(){ prot[item.key] = cb.checked; saveProt(); };
+    var lab = document.createElement('label');
+    lab.setAttribute('for', cbId);
+    lab.textContent = item.label;
+    lab.style.fontSize = '13px';
+    row.appendChild(cb);
+    row.appendChild(lab);
+    protList.appendChild(row);
+  });
+  content.appendChild(protList);
+
+  var sub2 = document.createElement('div');
+  sub2.className = 'subhead';
+  sub2.textContent = 'Submission log';
+  content.appendChild(sub2);
+
+  proj.submissions.forEach(function(s){
+    var row = document.createElement('div');
+    row.className = 'sub-row';
+    var fields = document.createElement('div');
+    fields.className = 'sub-fields';
+
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.placeholder = 'Agent / company';
+    nameInput.value = s.name || '';
+    nameInput.oninput = function(){ s.name = nameInput.value; };
+    nameInput.onblur = saveSubs;
+
+    var dateInput = document.createElement('input');
+    dateInput.type = 'text'; dateInput.placeholder = 'Date sent';
+    dateInput.value = s.dateSent || '';
+    dateInput.oninput = function(){ s.dateSent = dateInput.value; };
+    dateInput.onblur = saveSubs;
+
+    var statusSel = document.createElement('select');
+    var blankOpt = document.createElement('option');
+    blankOpt.value=''; blankOpt.textContent='Status';
+    statusSel.appendChild(blankOpt);
+    SUBMISSION_STATUS.forEach(function(st){
+      var opt = document.createElement('option');
+      opt.value = st; opt.textContent = st;
+      if(s.status === st) opt.selected = true;
+      statusSel.appendChild(opt);
+    });
+    statusSel.onchange = function(){ s.status = statusSel.value; saveSubs(); };
+
+    var notesInput = document.createElement('input');
+    notesInput.type = 'text'; notesInput.placeholder = 'Notes (option terms, etc.)';
+    notesInput.value = s.notes || '';
+    notesInput.oninput = function(){ s.notes = notesInput.value; };
+    notesInput.onblur = saveSubs;
+
+    fields.appendChild(nameInput);
+    fields.appendChild(dateInput);
+    fields.appendChild(statusSel);
+    fields.appendChild(notesInput);
+
+    var del = document.createElement('button');
+    del.className = 'card-del';
+    del.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    del.onclick = function(){
+      proj.submissions = proj.submissions.filter(function(x){ return x.id !== s.id; });
+      saveSubs();
+      renderSubmission(content, proj);
+    };
+
+    row.appendChild(fields);
+    row.appendChild(del);
+    content.appendChild(row);
+  });
+
+  var addBtn = document.createElement('button');
+  addBtn.className = 'add-row-btn';
+  addBtn.textContent = '+ Log a submission';
+  addBtn.onclick = function(){
+    proj.submissions.push({id:cid(), name:'', dateSent:'', status:'', notes:''});
+    saveSubs();
+    renderSubmission(content, proj);
+  };
+  content.appendChild(addBtn);
+}
+
+var dragCardId = null;
+
+function renderCards(content, proj){
+  content.innerHTML = '';
+  if(!proj.cards) proj.cards = [];
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">Drag cards between acts. Use the tag on each card to mark checkpoints (Plot Points, Pinches, Mid-Point).</div>';
+  content.appendChild(toolbar);
+
+  var cols = document.createElement('div');
+  cols.className = 'columns';
+
+  COLUMNS.forEach(function(col){
+    var colCards = proj.cards.filter(function(c){ return c.col === col.id; });
+    var colEl = document.createElement('div');
+    colEl.className = 'column';
+    colEl.dataset.col = col.id;
+    colEl.innerHTML = '<div class="column-head"><span class="column-title"></span><span class="column-count mono">' + colCards.length + '</span></div>';
+    colEl.querySelector('.column-title').textContent = col.title;
+
+    colCards.forEach(function(card){ colEl.appendChild(renderCard(card, proj)); });
+
+    var addBtn = document.createElement('button');
+    addBtn.className = 'add-card-btn';
+    addBtn.textContent = '+ Add card';
+    addBtn.onclick = function(){
+      proj.cards.push({id:cid(), col:col.id, text:'', tag:''});
+      store.update(proj.id, {cards: proj.cards});
+      renderAll();
+    };
+    colEl.appendChild(addBtn);
+
+    colEl.ondragover = function(e){ e.preventDefault(); };
+    colEl.ondrop = function(e){
+      e.preventDefault();
+      if(!dragCardId) return;
+      var card = proj.cards.find(function(c){ return c.id === dragCardId; });
+      if(card){ card.col = col.id; store.update(proj.id, {cards: proj.cards}); renderAll(); }
+    };
+    cols.appendChild(colEl);
+  });
+  content.appendChild(cols);
+}
+
+function renderCard(card, proj){
+  var el = document.createElement('div');
+  el.className = 'idx-card';
+  el.draggable = true;
+  el.ondragstart = function(){ dragCardId = card.id; el.classList.add('dragging'); };
+  el.ondragend = function(){ el.classList.remove('dragging'); };
+
+  var ta = document.createElement('textarea');
+  ta.value = card.text;
+  ta.placeholder = 'What happens in this scene?';
+  ta.oninput = function(){ card.text = ta.value; };
+  ta.onblur = function(){ store.update(proj.id, {cards: proj.cards}); };
+  el.appendChild(ta);
+
+  var foot = document.createElement('div');
+  foot.className = 'card-foot';
+  var sel = document.createElement('select');
+  sel.className = 'tag-select' + (card.tag ? ' tagged' : '');
+  TAGS.forEach(function(t){
+    var opt = document.createElement('option');
+    opt.value = t; opt.textContent = t || 'No tag';
+    if(t === card.tag) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.onchange = function(){
+    card.tag = sel.value;
+    sel.className = 'tag-select' + (card.tag ? ' tagged' : '');
+    store.update(proj.id, {cards: proj.cards});
+  };
+  var del = document.createElement('button');
+  del.className = 'card-del';
+  del.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+  del.onclick = function(){
+    proj.cards = proj.cards.filter(function(c){ return c.id !== card.id; });
+    store.update(proj.id, {cards: proj.cards});
+    renderAll();
+  };
+  foot.appendChild(sel);
+
+  if(proj.sequences && proj.sequences.length){
+    var seqSel = document.createElement('select');
+    seqSel.className = 'seq-select';
+    var noneOpt = document.createElement('option');
+    noneOpt.value = ''; noneOpt.textContent = 'No sequence';
+    seqSel.appendChild(noneOpt);
+    proj.sequences.forEach(function(s, i){
+      var opt = document.createElement('option');
+      opt.value = s.id; opt.textContent = (i+1) + '. ' + (s.name || 'Untitled');
+      if(card.sequenceId === s.id) opt.selected = true;
+      seqSel.appendChild(opt);
+    });
+    seqSel.onchange = function(){
+      card.sequenceId = seqSel.value;
+      store.update(proj.id, {cards: proj.cards});
+    };
+    foot.appendChild(seqSel);
+  }
+
+  foot.appendChild(del);
+  el.appendChild(foot);
+
+  var toggle = document.createElement('button');
+  toggle.className = 'scene-toggle';
+  toggle.textContent = el.classList.contains('expanded') ? '– scene details' : '+ scene details';
+  toggle.onclick = function(){
+    el.classList.toggle('expanded');
+    toggle.textContent = el.classList.contains('expanded') ? '– scene details' : '+ scene details';
+  };
+  el.appendChild(toggle);
+
+  var details = document.createElement('div');
+  details.className = 'scene-details';
+
+  var purposeLabel = document.createElement('label');
+  purposeLabel.textContent = 'Purpose';
+  var purposeSel = document.createElement('select');
+  SCENE_PURPOSES.forEach(function(p){
+    var opt = document.createElement('option');
+    opt.value = p; opt.textContent = p || 'Not set';
+    if(card.purpose === p) opt.selected = true;
+    purposeSel.appendChild(opt);
+  });
+  purposeSel.onchange = function(){ card.purpose = purposeSel.value; store.update(proj.id, {cards: proj.cards}); };
+
+  var conflictLabel = document.createElement('label');
+  conflictLabel.textContent = 'Conflict / obstacle';
+  var conflictTa = document.createElement('textarea');
+  conflictTa.value = card.conflict || '';
+  conflictTa.placeholder = 'What is this character up against here?';
+  conflictTa.oninput = function(){ card.conflict = conflictTa.value; };
+  conflictTa.onblur = function(){ store.update(proj.id, {cards: proj.cards}); };
+
+  var entryLabel = document.createElement('label');
+  entryLabel.textContent = 'Enter late, leave early';
+  var entryTa = document.createElement('textarea');
+  entryTa.value = card.entryExit || '';
+  entryTa.placeholder = 'Where does this scene actually start and end?';
+  entryTa.oninput = function(){ card.entryExit = entryTa.value; };
+  entryTa.onblur = function(){ store.update(proj.id, {cards: proj.cards}); };
+
+  details.appendChild(purposeLabel); details.appendChild(purposeSel);
+  details.appendChild(conflictLabel); details.appendChild(conflictTa);
+  details.appendChild(entryLabel); details.appendChild(entryTa);
+  el.appendChild(details);
+
+  return el;
+}
+
+/* ---------------- Critic's Page ---------------- */
+function renderCritic(content, proj){
+  content.innerHTML = '';
+  if(!proj.criticLog) proj.criticLog = [];
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">When the self-critical voice pipes up while you\'re drafting, dump it here instead of stopping to argue with it. Reread this in a few days — you\'ll usually find it says the same three or four things regardless of what you actually wrote.</div>';
+  content.appendChild(toolbar);
+
+  var form = document.createElement('div');
+  form.className = 'critic-form';
+  var ta = document.createElement('textarea');
+  ta.placeholder = 'What is the critic saying right now?';
+  ta.rows = 2;
+  var addBtn = document.createElement('button');
+  addBtn.textContent = 'Add entry';
+  addBtn.onclick = function(){
+    var v = ta.value.trim();
+    if(!v) return;
+    var entry = {id:cid(), date:new Date().toISOString().slice(0,10), text:v};
+    proj.criticLog.unshift(entry);
+    store.update(proj.id, {criticLog: proj.criticLog});
+    ta.value = '';
+    renderCritic(content, proj);
+  };
+  form.appendChild(ta);
+  form.appendChild(addBtn);
+  content.appendChild(form);
+
+  var list = document.createElement('div');
+  list.className = 'critic-list';
+  if(proj.criticLog.length === 0){
+    var empty = document.createElement('div');
+    empty.className = 'critic-empty';
+    empty.textContent = 'No entries yet — this fills up on its own once you start drafting.';
+    list.appendChild(empty);
+  }
+  proj.criticLog.forEach(function(entry){
+    var row = document.createElement('div');
+    row.className = 'critic-entry';
+    row.innerHTML = '<div class="critic-date mono"></div><div class="critic-text"></div>';
+    row.querySelector('.critic-date').textContent = entry.date;
+    row.querySelector('.critic-text').textContent = entry.text;
+    var del = document.createElement('button');
+    del.className = 'critic-del';
+    del.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    del.onclick = function(){
+      proj.criticLog = proj.criticLog.filter(function(e){ return e.id !== entry.id; });
+      store.update(proj.id, {criticLog: proj.criticLog});
+      renderCritic(content, proj);
+    };
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+  content.appendChild(list);
+}
+
+function renderGlossary(content){
+  content.innerHTML = '';
+  var controls = document.createElement('div');
+  controls.className = 'glossary-controls';
+  var search = document.createElement('div');
+  search.className = 'search-box';
+  search.innerHTML = '<input type="text" placeholder="Search terms… e.g. Mid-Point, dramatic need, playing against the grain">';
+  var input = search.querySelector('input');
+  input.value = state.glossQuery;
+  input.oninput = function(){ state.glossQuery = input.value; renderGlossList(); };
+  controls.appendChild(search);
+
+  var books = ['All', 'Screenplay', "Screenwriter's Workbook", 'Four Screenplays'];
+  var chips = document.createElement('div');
+  chips.className = 'chip-row';
+  books.forEach(function(b){
+    var chip = document.createElement('button');
+    chip.className = 'chip' + (state.glossBook === b ? ' active' : '');
+    chip.textContent = b;
+    chip.onclick = function(){ state.glossBook = b; renderGlossary(content); };
+    chips.appendChild(chip);
+  });
+  controls.appendChild(chips);
+  content.appendChild(controls);
+
+  var countEl = document.createElement('div');
+  countEl.className = 'gloss-count';
+  content.appendChild(countEl);
+
+  var grid = document.createElement('div');
+  grid.className = 'gloss-grid';
+  content.appendChild(grid);
+
+  function renderGlossList(){
+    var q = state.glossQuery.trim().toLowerCase();
+    var filtered = GLOSSARY.filter(function(g){
+      if(state.glossBook !== 'All' && g.book !== state.glossBook) return false;
+      if(!q) return true;
+      return (g.term + ' ' + g.definition).toLowerCase().indexOf(q) !== -1;
+    });
+    countEl.textContent = filtered.length + ' of ' + GLOSSARY.length + ' terms';
+    grid.innerHTML = '';
+    if(filtered.length === 0){
+      grid.innerHTML = '<div class="hint" style="color:var(--muted); grid-column:1/-1;">No matching terms.</div>';
+      return;
+    }
+    filtered.forEach(function(g){
+      var pillClass = g.book === 'Screenplay' ? 'sp' : (g.book === "Screenwriter's Workbook" ? 'wb' : 'fs');
+      var e = document.createElement('div');
+      e.className = 'gloss-entry';
+      e.innerHTML = '<div class="gloss-term"></div><div class="gloss-def"></div><div class="gloss-src"><span class="book-pill ' + pillClass + '"></span><span class="chnum"></span></div>';
+      e.querySelector('.gloss-term').textContent = g.term;
+      e.querySelector('.gloss-def').textContent = g.definition;
+      e.querySelector('.book-pill').textContent = g.book;
+      e.querySelector('.chnum').textContent = 'Ch. ' + g.chapterNum + ' — ' + (g.chapter || '');
+      var linkTab = findGlossaryLink(g.term);
+      if(linkTab && TAB_META[linkTab]){
+        var chip = document.createElement('button');
+        chip.className = 'gloss-link';
+        chip.type = 'button';
+        chip.textContent = 'Open in ' + TAB_META[linkTab].title;
+        chip.onclick = function(){ state.tab = linkTab; renderAll(); };
+        e.appendChild(chip);
+      }
+      grid.appendChild(e);
+    });
+  }
+  renderGlossList();
+}
+
+function createProject(){
+  store.create({name: 'Untitled Screenplay', roadmap: {}, cards: [], characters: [], sequences: [], rewriteChecklist: {}}).then(function(proj){
+    state.projects.push(proj);
+    state.currentId = proj.id;
+    renderAll();
+    var row = document.querySelector('.project-row.active .project-btn');
+    if(row) startRename(proj, row);
+  });
+}
+
+/* ---------------- Wire up ---------------- */
+document.querySelectorAll('.nav-btn').forEach(function(b){
+  b.onclick = function(){ state.tab = b.dataset.tab; renderAll(); };
+});
+document.getElementById('newProjectBtn').onclick = createProject;
+
+document.getElementById('exportBtn').onclick = function(){
+  var data = JSON.stringify({exportedAt: new Date().toISOString(), projects: state.projects}, null, 2);
+  var blob = new Blob([data], {type: 'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'screenwriting-desk-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById('importBtn').onclick = function(){
+  document.getElementById('importFile').click();
+};
+document.getElementById('importFile').onchange = function(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    var parsed;
+    try{ parsed = JSON.parse(reader.result); }
+    catch(err){ alert('That file isn\'t valid JSON.'); return; }
+    var incoming = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.projects) ? parsed.projects : [parsed]);
+    if(!incoming.length){ alert('No projects found in that file.'); return; }
+    Promise.all(incoming.map(function(p){
+      var copy = Object.assign({}, p);
+      delete copy.id;
+      return store.create(copy);
+    })).then(function(created){
+      created.forEach(function(proj){ state.projects.push(proj); });
+      state.currentId = created[created.length - 1].id;
+      renderAll();
+      alert('Imported ' + created.length + ' project' + (created.length === 1 ? '' : 's') + '.');
+    });
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+};
+
+(async function init(){
+  await store.init();
+  state.projects = await store.fetchAll();
+  if(state.projects.length === 0){
+    var proj = await store.create({name:'Example Project', roadmap:{s00:true, s01:true}, cards: exampleCards(), characters: [], sequences: [], rewriteChecklist: {}});
+    state.projects.push(proj);
+    state.currentId = proj.id;
+  } else if(!state.currentId){
+    state.currentId = state.projects[0].id;
+  }
+  renderAll();
+})();
+
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('service-worker.js').catch(function(e){ console.warn('Service worker registration failed:', e); });
+  });
+}
+</script>
+</body>
+</html>
