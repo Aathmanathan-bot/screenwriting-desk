@@ -532,7 +532,14 @@ var store = {
     if(this.mode === 'db'){
       var snap = await this.db.collection('projects').get();
       var out = [];
-      snap.docs.forEach(function(d){ if(d.exists){ var data = d.data(); data.id = d.id; out.push(data); } });
+      snap.docs.forEach(function(d){
+        if(d.exists){
+          // d.data() is a frozen snapshot — clone before mutating, or `.id =` silently no-ops
+          var data = JSON.parse(JSON.stringify(d.data()));
+          data.id = d.id;
+          out.push(data);
+        }
+      });
       out.sort(function(a,b){ return (a.createdAt||0) - (b.createdAt||0); });
       return out;
     } else {
