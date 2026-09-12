@@ -1,4 +1,4 @@
-const CACHE_NAME = 'screenwriting-desk-v1';
+const CACHE_NAME = 'screenwriting-desk-v2';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', function(event) {

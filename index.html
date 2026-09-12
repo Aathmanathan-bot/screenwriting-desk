@@ -270,9 +270,34 @@ button{font-family:inherit; cursor:pointer;}
 /* ---------- Glossary tab links ---------- */
 .gloss-link{display:inline-block; margin-top:8px; font-size:10.5px; font-family:"IBM Plex Mono"; color:var(--accent-2); background:transparent; border:1px solid var(--accent-2); border-radius:6px; padding:2px 7px;}
 .gloss-link:hover{background:var(--accent-2); color:#fff;}
+
+/* ---------- Character chips on cards ---------- */
+.card-char-chips{display:flex; flex-wrap:wrap; gap:4px;}
+.char-chip{font-size:10.5px; border:1px solid rgba(0,0,0,0.15); background:rgba(255,255,255,0.5); color:#5a5448; border-radius:999px; padding:2px 9px;}
+.char-chip.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+/* ---------- Graph ---------- */
+.graph-wrap{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:8px; overflow:hidden;}
+.graph-svg{width:100%; height:auto; display:block;}
+.graph-edge{stroke:var(--border); stroke-width:1.2;}
+.graph-node{cursor:pointer;}
+.graph-node text{font-family:"IBM Plex Sans"; font-size:9.5px; fill:var(--muted); text-anchor:middle; pointer-events:none;}
+.graph-node:hover text{fill:var(--ink); font-weight:600;}
+.graph-node-sequence circle{fill:var(--accent-2); stroke:var(--surface); stroke-width:2;}
+.graph-node-character circle{fill:var(--accent); stroke:var(--surface); stroke-width:2;}
+.graph-node-card circle{fill:var(--border); stroke:var(--surface); stroke-width:1.5;}
+.graph-node-card.tagged circle{fill:var(--accent); opacity:.8;}
+.graph-node:hover circle{stroke:var(--ink);}
+.graph-legend{display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-size:11.5px;}
+.legend-dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:2px; vertical-align:middle;}
+.legend-dot.seq{background:var(--accent-2);}
+.legend-dot.char{background:var(--accent);}
+.legend-dot.card{background:var(--border);}
+.legend-dot.card.tagged{background:var(--accent); opacity:.8;}
 </style>
 </head>
 <body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
 <div class="app" id="app">
   <div class="sidebar">
@@ -320,6 +345,10 @@ button{font-family:inherit; cursor:pointer;}
       <button class="nav-btn" data-tab="structuremap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 8v3M11 8v5M15 8v3M19 8v5"/></svg>
         Structure Map
+      </button>
+      <button class="nav-btn" data-tab="graph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="15" cy="14" r="2.5"/><path d="M8 7.5 16 12M6 8.5v7M8.3 16.5l4.7-1.8"/></svg>
+        Graph
       </button>
       <button class="nav-btn" data-tab="rewrite">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
@@ -570,6 +599,7 @@ var TAB_META = {
   cards: {title:'Cards', desc:'The 3×5 card method — drag scenes between acts, pin your checkpoints.'},
   critic: {title:'Critic’s Page', desc:'A running log for the self-critical voice while you draft — reread it later, not now.'},
   structuremap: {title:'Structure Map', desc:'Your checkpoints, plotted to scale across the page count.'},
+  graph: {title:'Graph', desc:'Sequences, cards, and characters — connected by what actually links them in your data.'},
   rewrite: {title:'Rewrite Checklist', desc:'Repeatable, pass by pass — reset it and run it again on the next draft.'},
   coverage: {title:'Coverage', desc:'A formal reader’s coverage report on your own finished draft.'},
   submission: {title:'Submission', desc:'Protect the script, then track who you sent it to.'},
@@ -673,6 +703,7 @@ function renderAll(){
   else if(state.tab === 'cards') renderCards(content, proj);
   else if(state.tab === 'critic') renderCritic(content, proj);
   else if(state.tab === 'structuremap') renderStructureMap(content, proj);
+  else if(state.tab === 'graph') renderGraphView(content, proj);
   else if(state.tab === 'rewrite') renderRewrite(content, proj);
   else if(state.tab === 'coverage') renderCoverage(content, proj);
   else if(state.tab === 'submission') renderSubmission(content, proj);
@@ -1134,6 +1165,126 @@ function renderStructureMap(content, proj){
   content.appendChild(legend);
 }
 
+/* ---------------- Graph ---------------- */
+var COL_LABEL_GRAPH = {act1:'Act I', act2a:'Act II-A', act2b:'Act II-B', act3:'Act III'};
+
+function renderGraphView(content, proj){
+  content.innerHTML = '';
+
+  var toolbar = document.createElement('div');
+  toolbar.className = 'board-toolbar';
+  toolbar.innerHTML = '<div class="hint">Sequences, cards, and characters, connected by what actually links them in your data — not everything is linked to everything. Click any node to jump to it.</div>';
+  content.appendChild(toolbar);
+
+  if(typeof d3 === 'undefined'){
+    var offline = document.createElement('div');
+    offline.className = 'critic-empty';
+    offline.textContent = 'The graph library didn\'t load (needs internet the first time). Everything else in the app still works offline.';
+    content.appendChild(offline);
+    return;
+  }
+
+  var nodes = [];
+  var links = [];
+  var idIndex = {};
+  function addNode(id, type, label, extra){
+    idIndex[id] = nodes.length;
+    nodes.push(Object.assign({id:id, type:type, label:label}, extra||{}));
+  }
+
+  (proj.sequences||[]).forEach(function(s){ addNode('seq:'+s.id, 'sequence', s.name || 'Untitled sequence'); });
+  (proj.characters||[]).forEach(function(c){ addNode('char:'+c.id, 'character', c.name || 'Unnamed'); });
+  (proj.cards||[]).forEach(function(c){
+    addNode('card:'+c.id, 'card', (c.text||'Untitled card'), {tag:c.tag, col:c.col});
+  });
+
+  (proj.cards||[]).forEach(function(c){
+    if(c.sequenceId && idIndex['seq:'+c.sequenceId] !== undefined){
+      links.push({source:'card:'+c.id, target:'seq:'+c.sequenceId});
+    }
+    (c.characterIds||[]).forEach(function(chId){
+      if(idIndex['char:'+chId] !== undefined){
+        links.push({source:'card:'+c.id, target:'char:'+chId});
+      }
+    });
+  });
+
+  if(nodes.length === 0){
+    var empty = document.createElement('div');
+    empty.className = 'critic-empty';
+    empty.textContent = 'Add some cards, characters, or sequences first — the graph draws itself from what you build elsewhere.';
+    content.appendChild(empty);
+    return;
+  }
+
+  var width = 760, height = 520;
+  var wrap = document.createElement('div');
+  wrap.className = 'graph-wrap';
+  content.appendChild(wrap);
+
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+  svg.setAttribute('class', 'graph-svg');
+  wrap.appendChild(svg);
+
+  var sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(function(d){ return d.id; }).distance(64).strength(0.55))
+    .force('charge', d3.forceManyBody().strength(-150))
+    .force('center', d3.forceCenter(width/2, height/2))
+    .force('collide', d3.forceCollide(function(d){ return d.type === 'card' ? 16 : 26; }))
+    .stop();
+  for(var i=0;i<320;i++) sim.tick();
+
+  // clamp to viewport with margin
+  var margin = 40;
+  nodes.forEach(function(n){
+    n.x = Math.max(margin, Math.min(width-margin, n.x));
+    n.y = Math.max(margin, Math.min(height-margin, n.y));
+  });
+
+  var ns = svg.namespaceURI;
+  var linkGroup = document.createElementNS(ns, 'g');
+  links.forEach(function(l){
+    var line = document.createElementNS(ns, 'line');
+    line.setAttribute('x1', l.source.x); line.setAttribute('y1', l.source.y);
+    line.setAttribute('x2', l.target.x); line.setAttribute('y2', l.target.y);
+    line.setAttribute('class', 'graph-edge');
+    linkGroup.appendChild(line);
+  });
+  svg.appendChild(linkGroup);
+
+  var nodeGroup = document.createElementNS(ns, 'g');
+  nodes.forEach(function(n){
+    var g = document.createElementNS(ns, 'g');
+    g.setAttribute('transform', 'translate(' + n.x + ',' + n.y + ')');
+    g.setAttribute('class', 'graph-node graph-node-' + n.type + (n.tag ? ' tagged' : ''));
+    var circle = document.createElementNS(ns, 'circle');
+    circle.setAttribute('r', n.type === 'card' ? 7 : (n.type === 'sequence' ? 15 : 12));
+    g.appendChild(circle);
+    var text = document.createElementNS(ns, 'text');
+    text.setAttribute('y', n.type === 'card' ? 17 : 24);
+    var label = n.label.length > 24 ? n.label.slice(0,24) + '…' : n.label;
+    text.textContent = label;
+    g.appendChild(text);
+    var titleEl = document.createElementNS(ns, 'title');
+    titleEl.textContent = n.type === 'card' ? (n.label + (n.col ? ' (' + (COL_LABEL_GRAPH[n.col]||n.col) + ')' : '') + (n.tag ? ' — ' + n.tag : '')) : n.label;
+    g.appendChild(titleEl);
+    g.onclick = function(){
+      if(n.type === 'card') state.tab = 'cards';
+      else if(n.type === 'character') state.tab = 'characters';
+      else if(n.type === 'sequence') state.tab = 'sequences';
+      renderAll();
+    };
+    nodeGroup.appendChild(g);
+  });
+  svg.appendChild(nodeGroup);
+
+  var legend = document.createElement('div');
+  legend.className = 'map-legend graph-legend';
+  legend.innerHTML = '<span class="legend-dot seq"></span> Sequence &nbsp; <span class="legend-dot char"></span> Character &nbsp; <span class="legend-dot card"></span> Card &nbsp; <span class="legend-dot card tagged"></span> Card with a checkpoint tag';
+  content.appendChild(legend);
+}
+
 /* ---------------- Rewrite Checklist ---------------- */
 function renderRewrite(content, proj){
   content.innerHTML = '';
@@ -1546,6 +1697,31 @@ function renderCard(card, proj){
   details.appendChild(purposeLabel); details.appendChild(purposeSel);
   details.appendChild(conflictLabel); details.appendChild(conflictTa);
   details.appendChild(entryLabel); details.appendChild(entryTa);
+
+  if(proj.characters && proj.characters.length){
+    if(!card.characterIds) card.characterIds = [];
+    var charLabel = document.createElement('label');
+    charLabel.textContent = 'Characters in this scene';
+    var charChips = document.createElement('div');
+    charChips.className = 'card-char-chips';
+    proj.characters.forEach(function(ch){
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      var on = card.characterIds.indexOf(ch.id) !== -1;
+      chip.className = 'char-chip' + (on ? ' on' : '');
+      chip.textContent = ch.name || 'Unnamed';
+      chip.onclick = function(){
+        var i = card.characterIds.indexOf(ch.id);
+        if(i === -1) card.characterIds.push(ch.id); else card.characterIds.splice(i, 1);
+        chip.classList.toggle('on');
+        store.update(proj.id, {cards: proj.cards});
+      };
+      charChips.appendChild(chip);
+    });
+    details.appendChild(charLabel);
+    details.appendChild(charChips);
+  }
+
   el.appendChild(details);
 
   return el;
